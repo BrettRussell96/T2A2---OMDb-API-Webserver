@@ -36,6 +36,10 @@ def create_app():
     def internal_server_error(err):
         return {"error": str(err)}, 500
     
+
+    from controllers.cli_controller import db_commands
+    app.register_blueprint(db_commands)
+    
     app.register_blueprint(main_bp)
 
 
