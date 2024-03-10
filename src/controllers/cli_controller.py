@@ -22,4 +22,30 @@ def drop_tables():
 
 @db_commands.cli.command('seed')
 def seed_tables():
+    users = [
+        User(
+            username="Admin user",
+            email="admin@email.com",
+            password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            is_admin=True
+        ),
+
+        User(
+            username="User 1",
+            email="user1@email.com",
+            password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            location="Melbourne"
+        ),
+        
+        User(
+            username="User 2",
+            email="user2@email.com",
+            password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            location="Sydney"
+        )
+    ]
+
+    db.session.add_all(users)
+    db.session.commit()
+
     print("Tables seeded")

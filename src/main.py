@@ -39,13 +39,11 @@ def create_app():
 
     from controllers.cli_controller import db_commands
     app.register_blueprint(db_commands)
-    
-    app.register_blueprint(main_bp)
 
+    from controllers.user_controller import user_bp
+    app.register_blueprint(user_bp)
+    
 
     return app
 
 
-@main_bp.route("/")
-def greeting():
-    return {"message": "Hello World!!"}, 200
