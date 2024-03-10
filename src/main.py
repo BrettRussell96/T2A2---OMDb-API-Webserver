@@ -9,6 +9,7 @@ from init import db, ma, jwt, bcrypt
 load_dotenv()
 main_bp = Blueprint('main', __name__, url_prefix='/main')
 
+
 def create_app():
     app = Flask(__name__)
 
@@ -23,27 +24,23 @@ def create_app():
     @app.errorhandler(400)
     def bad_request(err):
         return {"error": str(err)}, 400
-    
+
     @app.errorhandler(401)
     def unauthorized(err):
         return {"error": str(err)}, 401
-    
+
     @app.errorhandler(404)
     def not_found(err):
         return {"error": str(err)}, 404
-    
+
     @app.errorhandler(500)
     def internal_server_error(err):
         return {"error": str(err)}, 500
-    
 
     from controllers.cli_controller import db_commands
     app.register_blueprint(db_commands)
 
     from controllers.user_controller import user_bp
     app.register_blueprint(user_bp)
-    
 
     return app
-
-
