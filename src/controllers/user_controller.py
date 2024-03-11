@@ -2,7 +2,8 @@ from datetime import timedelta
 import functools
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
@@ -24,7 +25,9 @@ def authorise_as_admin(fn):
         if user.is_admin:
             return fn(*args, **kwargs)
         else:
-            return {"Error": "Not authorised to delete this user"}, 403
+            return {
+                "Error": "Not authorised to delete this user"
+                }, 403
     
     return wrapper
 
@@ -40,9 +43,13 @@ def get_all_users():
 def get_users_by_location():
     location_query = request.args.get('location')
     if not location_query:
-        return {"Error": "Location parameter is required"}, 400
+        return {
+            "Error": "Location parameter is required"
+            }, 400
     
-    users = User.query.filter(User.location.ilike(f"%{location_query}%")).all()
+    users = User.query.filter(
+        User.location.ilike(f"%{location_query}%")
+        ).all()
     return users_public_schema.dump(users), 200
 
 
@@ -124,7 +131,11 @@ def edit_user(username):
     user = User.query.filter_by(id=current_user_id, username=username).first()
 
     if not user:
-        return jsonify({"Error": f"User {username} could not be found"}), 404
+        return jsonify(
+            {
+                "Error": f"User {username} could not be found"
+                }
+            ), 404
     
     data = request.get_json()
     user.username = data.get('username', user.username)
@@ -136,7 +147,11 @@ def edit_user(username):
 
     db.session.commit()
 
-    return jsonify({"Messsage": "User updated successfully"}), 200
+    return jsonify(
+        {
+            "Messsage": "User updated successfully"
+            }
+        ), 200
 
 
 @user_bp.route("/<int:user_id>", methods=["DELETE"])
@@ -150,6 +165,14 @@ def delete_user(user_id):
         db.session.delete(user)
         db.session.commit()
 
-        return jsonify({"Message": f"User {user.username} deleted successfully"}), 200
+        return jsonify(
+            {
+                "Message": f"User {user.username} deleted successfully"
+                }
+            ), 200
     else:
-        return jsonify({"Error": f"User with id {user_id} not found"}), 404
+        return jsonify(
+            {
+                "Error": f"User with id {user_id} not found"
+                }
+            ), 404
