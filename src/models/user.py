@@ -29,3 +29,11 @@ class UserSchema(ma.Schema):
 
 user_schema = UserSchema(exclude=['password'])
 users_schema = UserSchema(many=True, exclude=['password'])
+
+
+class UserPublicSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'username', 'location')
+
+
+users_public_schema = UserPublicSchema(many=True)
