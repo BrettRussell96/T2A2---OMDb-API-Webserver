@@ -1,13 +1,9 @@
 import os
 
-from flask import Flask, Blueprint, request
-from dotenv import load_dotenv
+from flask import Flask
+from marshmallow.exceptions import ValidationError
 
 from init import db, ma, jwt, bcrypt
-
-
-load_dotenv()
-main_bp = Blueprint('main', __name__, url_prefix='/main')
 
 
 def create_app():
@@ -36,6 +32,10 @@ def create_app():
     @app.errorhandler(500)
     def internal_server_error(err):
         return {"error": str(err)}, 500
+    
+    @app.errorhandler(ValidationError)
+    def validation_error(error):
+        return {"error": error.messages}, 400
 
     from controllers.cli_controller import db_commands
     app.register_blueprint(db_commands)

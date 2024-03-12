@@ -1,10 +1,12 @@
 import os
 import requests
+import functools
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from init import db
+from models.user import User
 from models.media import Media, media_schema, medias_schema
 from models.media import media_titles_schema, media_plots_schema
 from models.media import media_ratings_schema
@@ -13,15 +15,43 @@ media_bp = Blueprint('media', __name__, url_prefix='/media')
 api_key = os.getenv('OMDB_API_KEY')
 
 
+def authorise_as_admin(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        user_id = get_jwt_identity()
+        stmt = db.select(User).filter_by(id=user_id)
+        user = db.session.scalar(stmt)
+
+        if user.is_admin:
+            return fn(*args, **kwargs)
+        else:
+            return {
+                "Error": "Only admin users can delete media."
+                }, 403
+    
+    return wrapper
+
+
 @media_bp.route("/", methods=["GET"])
 def get_media():
     info_type = request.args.get('info')
     media_type = request.args.get('media', 'all')
+    genre = request.args.get('genre', 'all')
+    actor = request.args.get('actor', 'all')
+    director = request.args.get('director', 'all')
 
-    if media_type == 'all':
-        media = Media.query
-    else:
-        media = Media.query.filter(Media.category == media_type)
+    query = Media.query
+
+    if media_type != 'all':
+        query = query.filter(Media.category == media_type)
+    if genre != 'all':
+        query = query.filter(Media.genre.ilike(f"%{genre}%"))
+    if actor != 'all':
+        query = query.filter(Media.actors.ilike(f"%{actor}%"))
+    if director != 'all':
+        query = query.filter(Media.director.ilike(f"%{director}%"))
+    
+    media = query.all()
 
     match info_type:
         case 'title':
@@ -135,6 +165,30 @@ def get_tv():
             "Error": "Title could not be found"
         }, 404
     
+
+@media_bp.route("/<int:media_id>", methods=["DELETE"])
+@jwt_required()
+@authorise_as_admin
+def delete_media(media_id):
+    stmt = db.select(Media).filter_by(id=media_id)
+    media = db.session.scalar(stmt)
+
+    if media:
+        db.session.delete(media)
+        db.session.commit()
+
+        return jsonify(
+            {
+                "Message": f"Media {media.title} deleted successfully"
+                }
+            ), 200
+    else:
+        return jsonify(
+            {
+                "Error": f"Media with id {media_id} not found"
+                }
+            ), 404
+
 
 
 
