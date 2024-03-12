@@ -9,7 +9,7 @@ from init import db, ma
 
 class CategoryEnum(enum.Enum):
     movie = "movie"
-    tv_show = "series"
+    series = "series"
 
 
 class Media(db.Model):
@@ -74,6 +74,7 @@ class MediaPlotSchema(ma.Schema):
         fields = (
             'id',
             'title',
+            'year',
             'category',
             'plot'
         )
@@ -88,6 +89,7 @@ class MediaRatingSchema(ma.Schema):
         fields = (
             'id',
             'title',
+            'year',
             'category',
             'ratings',
             'metascore'

@@ -14,30 +14,28 @@ api_key = os.getenv('OMDB_API_KEY')
 
 
 @media_bp.route("/", methods=["GET"])
-def get_all_media():
-    media = Media.query.all()
-    result = medias_schema.dump(media)
-    return {"media": result}, 200
+def get_media():
+    info_type = request.args.get('info')
+    media_type = request.args.get('media', 'all')
 
+    if media_type == 'all':
+        media = Media.query
+    else:
+        media = Media.query.filter(Media.category == media_type)
 
-@media_bp.route("/title", methods=["GET"])
-def get_titles():
-    media = Media.query.all()
-    result = media_titles_schema.dump(media)
-    return {"media": result}, 200
-
-
-@media_bp.route("/plot", methods=["GET"])
-def get_plot():
-    media = Media.query.all()
-    result = media_plots_schema.dump(media)
-    return {"media": result}, 200
-
-
-@media_bp.route("/rating", methods=["GET"])
-def get_rating():
-    media = Media.query.all()
-    result = media_ratings_schema.dump(media)
+    match info_type:
+        case 'title':
+            result = media_titles_schema.dump(media)
+        case 'plot':
+            result = media_plots_schema.dump(media)
+        case 'rating':
+            result = media_ratings_schema.dump(media)
+        case 'info':
+            result = medias_schema.dump(media)
+        case _:
+            return {
+                "Error": "Invalid query parameter"
+                }, 400
     return {"media": result}, 200
 
 
@@ -118,7 +116,7 @@ def get_tv():
         tv = Media(
             title=data.get('Title'),
             year=data.get('Year'),
-            category='tv_show',
+            category='series',
             genre=data.get('Genre'),
             director=data.get('director'),
             writer=data.get('Writer'),
