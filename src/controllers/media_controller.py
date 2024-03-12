@@ -5,10 +5,40 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from init import db
-from models.media import Media, media_schema
+from models.media import Media, media_schema, medias_schema
+from models.media import media_titles_schema, media_plots_schema
+from models.media import media_ratings_schema
 
 media_bp = Blueprint('media', __name__, url_prefix='/media')
 api_key = os.getenv('OMDB_API_KEY')
+
+
+@media_bp.route("/", methods=["GET"])
+def get_all_media():
+    media = Media.query.all()
+    result = medias_schema.dump(media)
+    return {"media": result}, 200
+
+
+@media_bp.route("/title", methods=["GET"])
+def get_titles():
+    media = Media.query.all()
+    result = media_titles_schema.dump(media)
+    return {"media": result}, 200
+
+
+@media_bp.route("/plot", methods=["GET"])
+def get_plot():
+    media = Media.query.all()
+    result = media_plots_schema.dump(media)
+    return {"media": result}, 200
+
+
+@media_bp.route("/rating", methods=["GET"])
+def get_rating():
+    media = Media.query.all()
+    result = media_ratings_schema.dump(media)
+    return {"media": result}, 200
 
 
 @media_bp.route("/movie", methods=["GET"])
@@ -101,4 +131,12 @@ def get_tv():
         db.session.add(tv)
         db.session.commit()
         return media_schema.dump(tv), 201
+    
+    else:
+        return {
+            "Error": "Title could not be found"
+        }, 404
+    
+
+
 

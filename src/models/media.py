@@ -34,7 +34,6 @@ class MediaSchema(ma.Schema):
     category = EnumField(CategoryEnum, by_value=True)
 
     class Meta:
-        model = Media
         fields = (
             'id',
             'title',
@@ -50,8 +49,49 @@ class MediaSchema(ma.Schema):
             'metascore',
             'box_office'
         )
-        ordered = True
 
 
 media_schema = MediaSchema()
 medias_schema = MediaSchema(many=True)
+
+
+class MediaTitleSchema(ma.Schema):
+    category = EnumField(CategoryEnum, by_value=True)
+    class Meta:
+        fields = (
+            'id',
+            'title',
+            'category'
+        )
+
+
+media_titles_schema = MediaTitleSchema(many=True)
+
+
+class MediaPlotSchema(ma.Schema):
+    category = EnumField(CategoryEnum, by_value=True)
+    class Meta:
+        fields = (
+            'id',
+            'title',
+            'category',
+            'plot'
+        )
+
+
+media_plots_schema = MediaPlotSchema(many=True)
+
+
+class MediaRatingSchema(ma.Schema):
+    category = EnumField(CategoryEnum, by_value=True)
+    class Meta:
+        fields = (
+            'id',
+            'title',
+            'category',
+            'ratings',
+            'metascore'
+        )
+
+
+media_ratings_schema = MediaRatingSchema(many=True)
