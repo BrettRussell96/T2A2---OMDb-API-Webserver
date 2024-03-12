@@ -57,8 +57,15 @@ def get_users_by_location():
 def user_register():
     try:
         body_data = request.get_json()
+        username = body_data.get('username')
+
+        if ' ' in username:
+            return {
+                "Error": "Username cannot contain spaces"
+            }, 400
+        
         user = User(
-            username=body_data.get('username'),
+            username=username,
             email=body_data.get('email'),
             location=body_data.get('location')
         )

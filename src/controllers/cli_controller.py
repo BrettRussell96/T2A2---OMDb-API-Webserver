@@ -4,6 +4,7 @@ from flask import Blueprint
 
 from init import db, bcrypt
 from models.user import User
+from models.media import Media
 
 db_commands = Blueprint('db', __name__)
 
@@ -24,21 +25,21 @@ def drop_tables():
 def seed_tables():
     users = [
         User(
-            username="Admin user",
+            username="Admin_user",
             email="admin@email.com",
             password=bcrypt.generate_password_hash('123456').decode('utf-8'),
             is_admin=True
         ),
 
         User(
-            username="User 1",
+            username="User1",
             email="user1@email.com",
             password=bcrypt.generate_password_hash('123456').decode('utf-8'),
             location="Melbourne"
         ),
         
         User(
-            username="User 2",
+            username="User2",
             email="user2@email.com",
             password=bcrypt.generate_password_hash('123456').decode('utf-8'),
             location="Sydney"
