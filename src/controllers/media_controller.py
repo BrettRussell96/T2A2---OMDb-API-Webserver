@@ -35,20 +35,20 @@ def authorise_as_admin(fn):
 @media_bp.route("/", methods=["GET"])
 def get_media():
     info_type = request.args.get('info')
-    media_type = request.args.get('media', 'all')
-    genre = request.args.get('genre', 'all')
-    actor = request.args.get('actor', 'all')
-    director = request.args.get('director', 'all')
+    media_type = request.args.get('media')
+    genre = request.args.get('genre')
+    actor = request.args.get('actor')
+    director = request.args.get('director')
 
     query = Media.query
 
-    if media_type != 'all':
+    if media_type:
         query = query.filter(Media.category == media_type)
-    if genre != 'all':
+    if genre:
         query = query.filter(Media.genre.ilike(f"%{genre}%"))
-    if actor != 'all':
+    if actor:
         query = query.filter(Media.actors.ilike(f"%{actor}%"))
-    if director != 'all':
+    if director:
         query = query.filter(Media.director.ilike(f"%{director}%"))
     
     media = query.all()
