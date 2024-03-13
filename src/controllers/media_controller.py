@@ -44,12 +44,28 @@ def get_media():
 
     if media_type:
         query = query.filter(Media.category == media_type)
+    else:
+        return {
+            "Error": "Invalid media. Must be either movie or series."
+            }, 400
     if genre:
         query = query.filter(Media.genre.ilike(f"%{genre}%"))
+    else:
+        return {
+            "Error": f"Genre {genre} not found."
+        }, 404
     if actor:
         query = query.filter(Media.actors.ilike(f"%{actor}%"))
+    else:
+        return {
+            "Error": f"Actor {actor} not found."
+        }, 404
     if director:
         query = query.filter(Media.director.ilike(f"%{director}%"))
+    else:
+        return {
+            "Error": f"Director {director} not found."
+        }, 404
     
     media = query.all()
 

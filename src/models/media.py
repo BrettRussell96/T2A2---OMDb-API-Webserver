@@ -29,6 +29,11 @@ class Media(db.Model):
     metascore = db.Column(db.String)
     box_office = db.Column(db.String)
 
+    interactions = db.relationship(
+        'Interaction',
+        back_populates='media'
+    )
+
 
 class MediaSchema(ma.Schema):
     category = EnumField(CategoryEnum, by_value=True)
@@ -49,6 +54,7 @@ class MediaSchema(ma.Schema):
             'metascore',
             'box_office'
         )
+        ordered = True
 
 
 media_schema = MediaSchema()
