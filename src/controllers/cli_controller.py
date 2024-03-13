@@ -25,24 +25,76 @@ def drop_tables():
 def seed_tables():
     users = [
         User(
-            username="Admin_user",
-            email="admin@email.com",
+            username="MelbourneAdmin",
+            email="melbadmin@email.com",
             password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            location="Melbourne",
             is_admin=True
         ),
 
         User(
-            username="User1",
-            email="user1@email.com",
+            username="SydneyAdmin",
+            email="sydadmin@email.com",
             password=bcrypt.generate_password_hash('123456').decode('utf-8'),
-            location="Melbourne"
+            location="Sydney",
+            is_admin=True
         ),
         
         User(
-            username="User2",
-            email="user2@email.com",
+            username="BrisbaneAdmin",
+            email="brisadmin@email.com",
+            password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            location="Brisbane",
+            is_admin=True
+        ),
+
+        User(
+            username="GarthoftheGalaxy",
+            email="gg@email.com",
+            password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            location="Melbourne"
+        ),
+
+        User(
+            username="IronMatt",
+            email="i&m@email.com",
+            password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            location="Melbourne"
+        ),
+
+        User(
+            username="Brooke99",
+            email="b99@email.com",
             password=bcrypt.generate_password_hash('123456').decode('utf-8'),
             location="Sydney"
+        ),
+
+        User(
+            username="SuperNatalie",
+            email="sprnat@email.com",
+            password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            location="Sydney"
+        ),
+
+        User(
+            username="PulpFintan",
+            email="pfin@email.com",
+            password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            location="Sydney"
+        ),
+
+        User(
+            username="CaptainAmanda",
+            email="captam@email.com",
+            password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            location="Brisbane"
+        ),
+
+        User(
+            username="GameofTheos",
+            email="got@email.com",
+            password=bcrypt.generate_password_hash('123456').decode('utf-8'),
+            location="Brisbane"
         )
     ]
 
