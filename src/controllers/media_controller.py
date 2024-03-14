@@ -4,6 +4,7 @@ import functools
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from sqlalchemy.exc import DataError
 
 from init import db
 from models.user import User
@@ -41,34 +42,41 @@ def get_media():
     director = request.args.get('director')
 
     query = Media.query
+    try:
+        if media_type:
+            query = query.filter(Media.category == media_type)
+            
+        if genre:
+            filtered_query = query.filter(Media.genre.ilike(f"%{genre}%"))
+            if filtered_query.first() is None:
+                return {
+                "Error": f"Genre {genre} not found."
+            }, 404
+            query = filtered_query
+            
+        if actor:
+            filtered_query = query.filter(Media.actors.ilike(f"%{actor}%"))
+            if filtered_query.first() is None:
+                return {
+                "Error": f"Actor {actor} not found."
+            }, 404
+            query = filtered_query
 
-    if media_type:
-        query = query.filter(Media.category == media_type)
-    else:
-        return {
-            "Error": "Invalid media. Must be either movie or series."
-            }, 400
-    if genre:
-        query = query.filter(Media.genre.ilike(f"%{genre}%"))
-    else:
-        return {
-            "Error": f"Genre {genre} not found."
-        }, 404
-    if actor:
-        query = query.filter(Media.actors.ilike(f"%{actor}%"))
-    else:
-        return {
-            "Error": f"Actor {actor} not found."
-        }, 404
-    if director:
-        query = query.filter(Media.director.ilike(f"%{director}%"))
-    else:
-        return {
-            "Error": f"Director {director} not found."
-        }, 404
+            
+        if director:
+            filtered_query = query.filter(Media.director.ilike(f"%{director}%"))
+            if filtered_query.first() is None:
+                return {
+                "Error": f"Director {director} not found."
+            }, 404
+            query = filtered_query
     
-    media = query.all()
-
+        media = query.all()
+    except DataError:
+        return {
+            "Error": "Media must be either movie or series if specified."
+        }, 422
+    
     match info_type:
         case 'title':
             result = media_titles_schema.dump(media)
@@ -76,12 +84,13 @@ def get_media():
             result = media_plots_schema.dump(media)
         case 'rating':
             result = media_ratings_schema.dump(media)
-        case 'info':
+        case 'all':
             result = medias_schema.dump(media)
         case _:
             return {
-                "Error": "Invalid query parameter"
-                }, 400
+                "Error": "Invalid info type. Please specify either "
+                        "title, plot, rating, or all"
+                }, 422
     return {"media": result}, 200
 
 

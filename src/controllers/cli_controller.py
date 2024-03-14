@@ -5,6 +5,8 @@ from flask import Blueprint
 from init import db, bcrypt
 from models.user import User
 from models.media import Media
+from models.interaction import Interaction
+
 
 db_commands = Blueprint('db', __name__)
 
@@ -91,7 +93,7 @@ def seed_tables():
         ),
 
         User(
-            username="GameofTheos",
+            username="GameofThomas",
             email="got@email.com",
             password=bcrypt.generate_password_hash('123456').decode('utf-8'),
             location="Brisbane"

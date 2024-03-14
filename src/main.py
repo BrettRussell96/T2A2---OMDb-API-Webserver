@@ -46,4 +46,7 @@ def create_app():
     from controllers.media_controller import media_bp
     app.register_blueprint(media_bp)
 
+    from controllers.interaction_controller import interaction_bp
+    app.register_blueprint(interaction_bp)
+
     return app

@@ -4,12 +4,11 @@ from marshmallow import fields, validate
 from marshmallow_enum import EnumField
 from sqlalchemy import CheckConstraint, Enum
 
-
-
+from .media import MediaSchema
 from init import db, ma
 
 
-class CategoryEnum(enum.Enum):
+class InteractionEnum(enum.Enum):
     yes = "yes"
     no = "no"
 
@@ -19,9 +18,9 @@ class Interaction(db.Model):
     __tablename__ = "interaction"
 
     id = db.Column(db.Integer, primary_key=True)
-    watched = db.Column(Enum(CategoryEnum), default=CategoryEnum.no)
+    watched = db.Column(Enum(InteractionEnum), default=InteractionEnum.no)
     rating = db.Column(db.Integer)
-    watchlist = db.Column(Enum(CategoryEnum), default=CategoryEnum.no)
+    watchlist = db.Column(Enum(InteractionEnum), default=InteractionEnum.no)
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     media_id = db.Column(db.Integer, db.ForeignKey('media.id'), nullable=False)
@@ -36,19 +35,28 @@ class Interaction(db.Model):
     )
 
     __table_args__ = (
-        CheckConstraint(
+        (CheckConstraint(
             'rating >= 0 AND rating <= 10', name='check_rating_range'
-        )
+        ),
+    )
     )
 
 
 class InteractionSchema(ma.Schema):
-
+    
+    id = fields.Int()
+    watched = EnumField(InteractionEnum, by_value=True)
     rating = fields.Integer(validate=validate.Range(min=0, max=10))
-
+    watchlist = EnumField(InteractionEnum, by_value=True)
+    user_id = fields.Int()
+    media_id = fields.Int()
     user = fields.Nested(
         'UserSchema',
         only = ['username', 'location']
+    )
+    media = fields.Nested(
+        MediaSchema,
+        only = ('id', 'title', 'year', 'category')
     )
 
     class Meta:

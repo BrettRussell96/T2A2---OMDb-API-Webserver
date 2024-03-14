@@ -30,7 +30,7 @@ class UserSchema(ma.Schema):
                 error="Username must be at least 5 characters."
             ),
             Regexp(
-                '^[a-zA-Z0-9_-.]+$',
+                '^[a-zA-Z0-9_.-]+$',
                 error="Username must unspaced with valid characters."
             )
         )

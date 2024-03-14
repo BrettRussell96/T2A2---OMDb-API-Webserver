@@ -2,12 +2,13 @@ import enum
 
 from sqlalchemy import Enum
 from sqlalchemy.dialects.postgresql import JSONB
+from marshmallow import fields
 from marshmallow_enum import EnumField
 
 from init import db, ma
 
 
-class CategoryEnum(enum.Enum):
+class MediaEnum(enum.Enum):
     movie = "movie"
     series = "series"
 
@@ -18,7 +19,7 @@ class Media(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
     year = db.Column(db.String)
-    category = db.Column(Enum(CategoryEnum))
+    category = db.Column(Enum(MediaEnum))
     genre = db.Column(db.String)
     director = db.Column(db.String)
     writer = db.Column(db.String)
@@ -36,7 +37,11 @@ class Media(db.Model):
 
 
 class MediaSchema(ma.Schema):
-    category = EnumField(CategoryEnum, by_value=True)
+
+    id = fields.Int()
+    title = fields.Str()
+    year = fields.Str()
+    category = EnumField(MediaEnum, by_value=True)
 
     class Meta:
         fields = (
@@ -62,7 +67,7 @@ medias_schema = MediaSchema(many=True)
 
 
 class MediaTitleSchema(ma.Schema):
-    category = EnumField(CategoryEnum, by_value=True)
+    category = EnumField(MediaEnum, by_value=True)
     class Meta:
         fields = (
             'id',
@@ -75,7 +80,7 @@ media_titles_schema = MediaTitleSchema(many=True)
 
 
 class MediaPlotSchema(ma.Schema):
-    category = EnumField(CategoryEnum, by_value=True)
+    category = EnumField(MediaEnum, by_value=True)
     class Meta:
         fields = (
             'id',
@@ -90,7 +95,7 @@ media_plots_schema = MediaPlotSchema(many=True)
 
 
 class MediaRatingSchema(ma.Schema):
-    category = EnumField(CategoryEnum, by_value=True)
+    category = EnumField(MediaEnum, by_value=True)
     class Meta:
         fields = (
             'id',
