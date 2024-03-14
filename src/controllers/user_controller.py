@@ -15,23 +15,6 @@ from models.user import User, user_schema, users_public_schema
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 
-def authorise_as_admin(fn):
-    @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
-        user_id = get_jwt_identity()
-        stmt = db.select(User).filter_by(id=user_id)
-        user = db.session.scalar(stmt)
-
-        if user.is_admin:
-            return fn(*args, **kwargs)
-        else:
-            return {
-                "Error": "Not authorised to delete this user"
-                }, 403
-    
-    return wrapper
-
-
 @user_bp.route("/")
 def get_all_users():
     users = User.query.all()
@@ -163,23 +146,33 @@ def edit_user(username):
 
 @user_bp.route("/<int:user_id>", methods=["DELETE"])
 @jwt_required()
-@authorise_as_admin
 def delete_user(user_id):
-    stmt = db.select(User).filter_by(id=user_id)
-    user = db.session.scalar(stmt)
+    current_user_id = get_jwt_identity()
+    stmt = db.select(User).filter_by(id=current_user_id)
+    current_user = db.session.scalar(stmt)
 
-    if user:
-        db.session.delete(user)
-        db.session.commit()
+    if not current_user:
+        return {
+            "Error": "User not found."
+        }, 404
+    
+    if current_user.id == user_id or current_user.is_admin:
+        user_to_delete = db.session.scalar(
+            db.select(User)
+            .filter_by(id=user_id)
+        )
 
-        return jsonify(
-            {
-                "Message": f"User {user.username} deleted successfully"
-                }
-            ), 200
+        if user_to_delete:
+            db.session.delete(user_to_delete)
+            db.session.commit()
+            return {
+                "Message": f"User {user_to_delete.username} deleted successfully."
+            }, 200
+        else:
+            return {
+                "Error": f"Unable to find user with id {user_id}."
+            }, 404
     else:
-        return jsonify(
-            {
-                "Error": f"User with id {user_id} not found"
-                }
-            ), 404
+        return {
+            "Error": "Not authorised to delete this user."
+        }, 403

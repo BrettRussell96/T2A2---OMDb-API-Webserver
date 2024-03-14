@@ -196,15 +196,15 @@ def get_tv():
 @authorise_as_admin
 def delete_media(media_id):
     stmt = db.select(Media).filter_by(id=media_id)
-    media = db.session.scalar(stmt)
+    media_to_delete = db.session.scalar(stmt)
 
-    if media:
-        db.session.delete(media)
+    if media_to_delete:
+        db.session.delete(media_to_delete)
         db.session.commit()
 
         return jsonify(
             {
-                "Message": f"Media {media.title} deleted successfully"
+                "Message": f"Media {media_to_delete.title} deleted successfully"
                 }
             ), 200
     else:
