@@ -545,7 +545,7 @@ def seed_tables():
         ),
 
         Media(
-            title="Superatural",
+            title="Supernatural",
             year="2005-2020",
             category="series", 
             genre="Drama, Fantasy, Horror", 
@@ -565,6 +565,76 @@ def seed_tables():
     ]
 
     db.session.add_all(media)
+
+    interactions = [
+        Interaction(
+            watched="yes",
+            rating=9,
+            user_id=5,
+            media_id=1
+        ),
+
+        Interaction(
+            watchlist="yes",
+            user_id=8,
+            media_id=4
+        ),
+
+        Interaction(
+            watchlist="yes",
+            user_id=8,
+            media_id=5
+        ),
+
+        Interaction(
+            watched="yes",
+            rating="7",
+            user_id=6,
+            media_id=11
+        ),
+
+        Interaction(
+            watched="yes",
+            rating=4,
+            user_id=6,
+            media_id=13
+        ),
+
+        Interaction(
+            watchlist="yes",
+            user_id=8,
+            media_id=3
+        ),
+
+        Interaction(
+            watchlist="yes",
+            user_id=10,
+            media_id=3
+        ),
+
+        Interaction(
+            watched="yes",
+            user_id=4,
+            media_id=20
+        ),
+
+        Interaction(
+            watched="yes",
+            rating=8,
+            user_id=7,
+            media_id=19
+        ),
+
+        Interaction(
+            watched="yes",
+            rating=10,
+            watchlist="yes",
+            user_id=7,
+            media_id=20
+        )
+    ]
+
+    db.session.add_all(interactions)
     db.session.commit()
 
     print("Tables seeded")
