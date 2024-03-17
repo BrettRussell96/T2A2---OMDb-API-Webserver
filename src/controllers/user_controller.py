@@ -11,6 +11,7 @@ from werkzeug.security import generate_password_hash
 
 from init import db, bcrypt
 from models.user import User, user_schema, users_public_schema
+from models.user import user_schema_partial, user_registration_schema
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
@@ -38,24 +39,24 @@ def get_users_by_location():
 
 @user_bp.route("/register", methods=["POST"])
 def user_register():
+    body_data = request.get_json()
     try:
-        body_data = request.get_json()
+        errors = user_registration_schema.validate(body_data)
+        if errors:
+            return jsonify(errors), 400
+        
         username = body_data.get('username')
+        email = body_data.get('email')
+        password = body_data.get('password')
 
-        if ' ' in username:
-            return {
-                "Error": "Username cannot contain spaces"
-            }, 400
         
         user = User(
             username=username,
-            email=body_data.get('email'),
+            email=email,
             location=body_data.get('location')
         )
-        password = body_data.get('password')
 
-        if password:
-            user.password = bcrypt.generate_password_hash(password).decode(
+        user.password = bcrypt.generate_password_hash(password).decode(
                 'utf-8'
                 )
 
@@ -69,17 +70,17 @@ def user_register():
         error_code = err.orig.pgcode
         if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
             return {
-                "Error": f"The {err.orig.diag.column_name}"
+                "Error": f"The {err.orig.diag.column_name} field"
                 " is required to create a user."
                 }, 400
-        elif error_code == errorcodes.UNIQUE_VIOLATION:
+        if error_code == errorcodes.UNIQUE_VIOLATION:
             column_name = err.orig.diag.constraint_name
             if 'username' in column_name:
                 return {
                     "Error": "That username is already taken."
                     " Please choose another one."
                     }, 400
-            elif 'email' in column_name:
+            if 'email' in column_name:
                 return {
                     "Error": "That email is already registered."
                     " Please use a different email."
@@ -114,34 +115,54 @@ def user_login():
             }, 401
 
 
-@user_bp.route("/<string:username>", methods=["PUT", "PATCH"])
+@user_bp.route("/", methods=["PUT", "PATCH"])
 @jwt_required()
-def edit_user(username):
+def edit_user():
     current_user_id = get_jwt_identity()
-    user = User.query.filter_by(id=current_user_id, username=username).first()
-
-    if not user:
-        return jsonify(
-            {
-                "Error": f"User {username} could not be found"
-                }
-            ), 404
+    current_user = User.query.filter_by(id=current_user_id).first()
+    if not current_user:
+        return jsonify({
+            "Error": f"User could not be found."
+        }), 404
     
     data = request.get_json()
-    user.username = data.get('username', user.username)
-    user.email = data.get('email', user.email)
-    user.location = data.get('location', user.location)
 
-    if data.get('password'):
-        user.password = generate_password_hash(data['password'])
+    try: 
+        errors = user_schema_partial.validate(data)
+        if errors:
+            return jsonify(errors), 400  
 
-    db.session.commit()
+        if 'username' in data:
+            current_user.username = data['username']
+        if 'email' in data:
+            current_user.email = data['email']
+        if 'location' in data:
+            current_user.location = data['location']
+        if 'password' in data:
+            current_user.password = generate_password_hash(data['password'])
+        
+        db.session.commit()
 
-    return jsonify(
-        {
-            "Messsage": "User updated successfully"
-            }
-        ), 200
+        return jsonify(
+            {
+                "Messsage": "User updated successfully"
+                }
+            ), 200
+    except IntegrityError as err:
+        db.session.rollback()
+        error_code = err.orig.pgcode
+        if error_code == errorcodes.UNIQUE_VIOLATION:
+            column_name = err.orig.diag.constraint_name
+            if 'username' in column_name:
+                return {
+                    "Error": "That username is already taken."
+                    " Please choose another one."
+                    }, 400
+            elif 'email' in column_name:
+                return {
+                    "Error": "That email is already registered."
+                    " Please use a different email."
+                    }, 400
 
 
 @user_bp.route("/<int:user_id>", methods=["DELETE"])

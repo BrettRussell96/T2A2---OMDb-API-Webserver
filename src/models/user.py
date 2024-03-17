@@ -31,7 +31,21 @@ class UserSchema(ma.Schema):
             ),
             Regexp(
                 '^[a-zA-Z0-9_.-]+$',
-                error="Username must unspaced with valid characters."
+                error="Username must be unspaced with valid characters."
+            )
+        )
+    )
+
+    password = fields.String(
+        required=True,
+        validate=And(
+            Length(
+                min=5,
+                error="Password must be at least 5 characters."
+            ),
+            Regexp(
+                '^[a-zA-Z0-9_.-]+$',
+                error="Password must be unspaced with valid characters."
             )
         )
     )
@@ -48,8 +62,9 @@ class UserSchema(ma.Schema):
 
 
 user_schema = UserSchema(exclude=['password'])
+user_registration_schema = UserSchema()
 users_schema = UserSchema(many=True, exclude=['password'])
-
+user_schema_partial = UserSchema(partial=True)
 
 class UserPublicSchema(ma.Schema):
     class Meta:
