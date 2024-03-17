@@ -1,7 +1,7 @@
-from init import db, ma
-
 from marshmallow import fields
 from marshmallow.validate import Length, And, Regexp
+
+from init import db, ma
 
 
 class User(db.Model):

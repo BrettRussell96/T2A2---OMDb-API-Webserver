@@ -14,23 +14,6 @@ from models.media import Media
 interaction_bp = Blueprint('interaction', __name__, url_prefix='/interaction')
 
 
-def authorise_as_admin(fn):
-    @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
-        user_id = get_jwt_identity()
-        stmt = db.select(User).filter_by(id=user_id)
-        user = db.session.scalar(stmt)
-
-        if user.is_admin:
-            return fn(*args, **kwargs)
-        else:
-            return {
-                "Error": "Not authorised to delete this user"
-                }, 403
-    
-    return wrapper
-
-
 @interaction_bp.route("/user", methods=["GET"])
 @jwt_required()
 def get_user_interactions():
