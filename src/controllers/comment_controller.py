@@ -2,6 +2,8 @@ from datetime import date
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
 from init import db
@@ -17,14 +19,33 @@ comment_bp = Blueprint('comment', __name__, url_prefix='/comment')
 def get_comments():
     username = request.args.get('username')
     title = request.args.get('title')
-    query = db.session.query(Comment)
+    
+    query = Comment.query.options(joinedload(Comment.children))
 
     if username:
-        query = query.join(User).filter(User.username == username)
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify(
+                {
+                    "Error": "User not found."
+                }
+            ), 404
+        
+        user_comment_ids = db.session.query(Comment.id).filter(Comment.user_id == user.id).subquery()
+    
+        query = query.filter(
+            or_(
+                Comment.user_id == user.id,
+                Comment.parent_id.in_(user_comment_ids)
+            )
+        )
     
     if title:
         query = query.join(Media).filter(Media.title.ilike(title))
     
+    if not username and not title:
+        query = query.filter(Comment.parent_id == None)
+
     comments = query.all()
 
     if not comments:
@@ -54,7 +75,7 @@ def create_comment():
     title = data['title']
     category = data['category']
     content = data['content']
-    parent_id = data.get('parent_id')
+    parent_id = data.get('parent id')
 
     try:
         category_enum = MediaEnum[category]

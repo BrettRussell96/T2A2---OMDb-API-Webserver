@@ -53,6 +53,8 @@ class CommentSchema(ma.Schema):
 
     parent_id = fields.Int(allow_none=True)
 
+    children = fields.Nested('self', many=True, exclude=('parent',))
+
     class Meta:
         fields = (
             'id',

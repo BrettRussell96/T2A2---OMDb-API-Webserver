@@ -589,7 +589,7 @@ def seed_tables():
 
         Interaction(
             watched="yes",
-            rating="7",
+            rating=7,
             user_id=6,
             media_id=11
         ),
@@ -636,6 +636,73 @@ def seed_tables():
     ]
 
     db.session.add_all(interactions)
+
+    comments = [
+        Comment(
+            content="This is the best movie ever made, its a must see!",
+            user_id=5,
+            media_id=1
+        ),
+
+        Comment(
+            content="Wasn't the biggest fan of this movie, certainly underwhelming compared to other marvel movies i've seen.",
+            user_id=10,
+            media_id=1
+        ),
+
+        Comment(
+            content="Not sure if you can tell from my name but im a huge fan of this series. Great story, great cast, could not recommend this show more higly.",
+            user_id=10,
+            media_id=11
+        ),
+
+        Comment(
+            content="This is a really entertaining series, it has witty dialogue, a charming cast and a gripping storyline. Lucifer is definitely one to binge.",
+            user_id=7,
+            media_id=19
+        ),
+
+        Comment(
+            content="I think this movie is pretty good, although maybe a little too hard to follow at times.",
+            user_id=4,
+            media_id=9
+        ),
+
+        Comment(
+            content="A true classic, this has to be Quentin Tarantino's finest work.",
+            user_id=8,
+            media_id=7
+        ),
+
+        Comment(
+            content="Loved this series, so gripping and suspenseful. Henry Cavill plays the role of Geralt to perfection!",
+            user_id=5,
+            media_id=14
+        ),
+
+        Comment(
+            content="Yeah ikr too bad hes gone next season lol.",
+            user_id=7,
+            media_id=14,
+            parent_id=7
+        ),
+
+        Comment(
+            content="How dare you, are you insane?",
+            user_id=5,
+            media_id=1,
+            parent_id=2
+        ),
+
+        Comment(
+            content="I've been really curious about this series, i think im gonna need to give it a watch!",
+            user_id=9,
+            media_id=19,
+            parent_id=4
+        )
+    ]
+
+    db.session.add_all(comments)
     db.session.commit()
 
     print("Tables seeded")
