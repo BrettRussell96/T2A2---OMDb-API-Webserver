@@ -49,4 +49,7 @@ def create_app():
     from controllers.interaction_controller import interaction_bp
     app.register_blueprint(interaction_bp)
 
+    from controllers.comment_controller import comment_bp
+    app.register_blueprint(comment_bp)
+
     return app
