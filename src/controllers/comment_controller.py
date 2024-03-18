@@ -122,3 +122,49 @@ def update_comment(comment_id):
     return jsonify(comment_schema.dump(comment)), 200
 
 
+@comment_bp.route("/<int:comment_id>", methods=["DELETE"])
+@jwt_required()
+def delete_comment(comment_id):
+    current_user_id = get_jwt_identity()
+
+    try:
+        comment_to_delete = db.session.scalar(
+            db.select(Comment)
+            .join(User)
+            .filter(Comment.id == comment_id, User.id == current_user_id)
+        )
+    except NoResultFound:
+        comment_to_delete = None
+
+    if not comment_to_delete:
+        current_user = db.session.scalar(
+            db.select(User)
+            .filter_by(id=current_user_id)
+        )
+        if current_user.is_admin:
+            comment_to_delete = db.session.scalar(
+                db.select(Comment)
+                .filter_by(id=comment_id)
+            )
+            if not comment_to_delete:
+                return jsonify(
+                    {
+                        "Error": f"Unable to find comment with id {comment_id}."
+                    }
+                ), 404
+        else:
+            return jsonify(
+                {
+                    "Error": "Not authorised to delete this comment."
+                }
+            ), 403
+    
+    db.session.delete(comment_to_delete)
+    db.session.commit()
+    return jsonify(
+        {
+            "Message": f"Comment with id {comment_id} deleted successfully."
+        }
+    ), 200
+
+

@@ -195,7 +195,10 @@ def delete_interaction(interaction_id):
         interaction_to_delete = None
 
     if not interaction_to_delete:
-        current_user = db.session.scalar(db.select(User).filter_by(id=current_user_id))
+        current_user = db.session.scalar(
+            db.select(User)
+            .filter_by(id=current_user_id)
+        )
         if current_user.is_admin:
             interaction_to_delete = db.session.scalar(
                 db.select(Interaction)
