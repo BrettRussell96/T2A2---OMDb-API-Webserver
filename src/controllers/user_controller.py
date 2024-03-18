@@ -20,16 +20,18 @@ user_bp = Blueprint('user', __name__, url_prefix='/user')
 def get_all_users():
     users = User.query.all()
     result = users_public_schema.dump(users)
-    return {"users": result}, 200
+    return jsonify({"users": result}), 200
 
 
 @user_bp.route("/location")
 def get_users_by_location():
     location_query = request.args.get('location')
     if not location_query:
-        return {
-            "Error": "Location parameter is required"
-            }, 400
+        return jsonify(
+            {
+                "Error": "Location parameter is required"
+            }
+        ), 400
     
     users = User.query.filter(
         User.location.ilike(f"%{location_query}%")
@@ -69,22 +71,28 @@ def user_register():
         db.session.rollback()
         error_code = err.orig.pgcode
         if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
-            return {
-                "Error": f"The {err.orig.diag.column_name} field"
-                " is required to create a user."
-                }, 400
+            return jsonify(
+                {
+                    "Error": f"The {err.orig.diag.column_name} field"
+                    " is required to create a user."
+                }
+            ), 400
         if error_code == errorcodes.UNIQUE_VIOLATION:
             column_name = err.orig.diag.constraint_name
             if 'username' in column_name:
-                return {
-                    "Error": "That username is already taken."
-                    " Please choose another one."
-                    }, 400
+                return jsonify(
+                    {
+                        "Error": "That username is already taken."
+                        " Please choose another one."
+                    }
+                ), 400
             if 'email' in column_name:
-                return {
-                    "Error": "That email is already registered."
-                    " Please use a different email."
-                    }, 400
+                return jsonify(
+                    {
+                        "Error": "That email is already registered."
+                        " Please use a different email."
+                    }
+                ), 400
 
 
 @user_bp.route("/login", methods=["POST"])
@@ -104,15 +112,19 @@ def user_login():
             identity=str(user.id),
             expires_delta=timedelta(days=7)
             )
-        return {
+        return jsonify(
+            {
             "username": user.username,
             "email": user.email, "token": token,
             "is_admin": user.is_admin
             }
+        ), 200
     else:
-        return {
-            "Error": "Username or password is invalid"
-            }, 401
+        return jsonify(
+            {
+                "Error": "Username or password is invalid"
+            }
+        ), 401
 
 
 @user_bp.route("/", methods=["PUT", "PATCH"])
@@ -121,9 +133,11 @@ def edit_user():
     current_user_id = get_jwt_identity()
     current_user = User.query.filter_by(id=current_user_id).first()
     if not current_user:
-        return jsonify({
-            "Error": f"User could not be found."
-        }), 404
+        return jsonify(
+            {
+                "Error": f"User could not be found."
+            }
+        ), 404
     
     data = request.get_json()
 
@@ -146,23 +160,27 @@ def edit_user():
         return jsonify(
             {
                 "Messsage": "User updated successfully"
-                }
-            ), 200
+            }
+        ), 200
     except IntegrityError as err:
         db.session.rollback()
         error_code = err.orig.pgcode
         if error_code == errorcodes.UNIQUE_VIOLATION:
             column_name = err.orig.diag.constraint_name
             if 'username' in column_name:
-                return {
-                    "Error": "That username is already taken."
-                    " Please choose another one."
-                    }, 400
+                return jsonify(
+                    {
+                        "Error": "That username is already taken."
+                        " Please choose another one."
+                    }
+                ), 400
             elif 'email' in column_name:
-                return {
-                    "Error": "That email is already registered."
-                    " Please use a different email."
-                    }, 400
+                return jsonify(
+                    {
+                        "Error": "That email is already registered."
+                        " Please use a different email."
+                    }
+                ), 400
 
 
 @user_bp.route("/<int:user_id>", methods=["DELETE"])
@@ -173,9 +191,11 @@ def delete_user(user_id):
     current_user = db.session.scalar(stmt)
 
     if not current_user:
-        return {
-            "Error": "User not found."
-        }, 404
+        return jsonify(
+            {
+                "Error": "User not found."
+            }
+        ), 404
     
     if current_user.id == user_id or current_user.is_admin:
         user_to_delete = db.session.scalar(
@@ -186,14 +206,20 @@ def delete_user(user_id):
         if user_to_delete:
             db.session.delete(user_to_delete)
             db.session.commit()
-            return {
-                "Message": f"User {user_to_delete.username} deleted successfully."
-            }, 200
+            return jsonify(
+                {
+                    "Message": f"User {user_to_delete.username} deleted successfully."
+                }
+            ), 200
         else:
-            return {
-                "Error": f"Unable to find user with id {user_id}."
-            }, 404
+            return jsonify(
+                {
+                    "Error": f"Unable to find user with id {user_id}."
+                }
+            ), 404
     else:
-        return {
-            "Error": "Not authorised to delete this user."
-        }, 403
+        return jsonify(
+            {
+                "Error": "Not authorised to delete this user."
+            }
+        ), 403

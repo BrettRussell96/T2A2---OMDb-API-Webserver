@@ -23,15 +23,19 @@ def get_user_interactions():
     watchlist = request.args.get('watchlist')
 
     if not username:
-        return {
-            "Error": "Username is required"
-        }, 400
+        return jsonify(
+            {
+                "Error": "Username is required"
+            }
+        ), 400
     
     user = User.query.filter_by(username=username).first()
     if not user:
-        return {
-            "Error": f"User {username} not found"
-        }, 404
+        return jsonify(
+            {
+                "Error": f"User {username} not found"
+            }
+        ), 404
     
     query = Interaction.query.filter_by(user_id=user.id)
 
@@ -46,9 +50,11 @@ def get_user_interactions():
     
     interactions = query.all()
     if not interactions:
-        return {
-            "Error": f"No specified interactions found for user '{username}'."
-        }, 404
+        return jsonify(
+            {
+                "Error": f"No specified interactions found for user '{username}'."
+            }
+        ), 404
 
     return jsonify(interactions_schema.dump(interactions)), 200
 
@@ -62,15 +68,19 @@ def get_media_interactions():
     watchlist = request.args.get('watchlist')
 
     if not title:
-        return {
-            "Error": "Must enter a value for title."
-        }, 400
+        return jsonify(
+            {
+                "Error": "Must enter a value for title."
+            }
+        ), 400
 
     media = Media.query.filter(func.lower(Media.title) == func.lower(title)).first()
     if not media:
-        return {
-            "Error": f"'{title}' could not be found."
-        }, 404
+        return jsonify(
+            {
+                "Error": f"'{title}' could not be found."
+            }
+        ), 404
     
     query = Interaction.query.filter_by(media_id=media.id)
     if watched == 'yes':
@@ -84,9 +94,11 @@ def get_media_interactions():
     
     interactions = query.all()
     if not interactions:
-        return {
-            "Error": f"No specified interactions found for media '{title}'."
-        }, 404
+        return jsonify(
+            {
+                "Error": f"No specified interactions found for media '{title}'."
+            }
+        ), 404
     
     return jsonify(interactions_schema.dump(interactions)), 200
 
@@ -98,15 +110,19 @@ def interaction(media_id):
         current_user_id = get_jwt_identity()
         user = User.query.get(current_user_id)
         if not user:
-            return {
-                "Error": "User not found"
-            }, 404
+            return jsonify(
+                {
+                    "Error": "User not found"
+                }
+            ), 404
 
         media = Media.query.get(media_id)
         if not media:
-            return {
-                "Error": f"Media with id {media_id} could not be found"
-            }, 404
+            return jsonify(
+                {
+                    "Error": f"Media with id {media_id} could not be found"
+                }
+            ), 404
         
         body_data = request.get_json()
 
@@ -116,10 +132,12 @@ def interaction(media_id):
 
         if request.method == "POST":
             if existing:
-                return {
-                    "Error": "Interaction already exists."
-                    " Use PUT or PATCH to update."
-                }, 400
+                return jsonify(
+                    {
+                        "Error": "Interaction already exists."
+                        " Use PUT or PATCH to update."
+                    }
+                ), 400
             interaction = Interaction(
                 watched=body_data.get('watched'),
                 rating=body_data.get('rating'),
@@ -130,9 +148,11 @@ def interaction(media_id):
             db.session.add(interaction)
         else:
             if not existing:
-                return {
-                    "Error": "No interaction found. Use POST to create." 
-                }, 404
+                return jsonify(
+                    {
+                        "Error": "No interaction found. Use POST to create." 
+                    }
+                ), 404
             existing.watched = body_data.get('watched', existing.watched)
             existing.rating = body_data.get('rating', existing.rating)
             existing.watchlist = body_data.get('watchlist', existing.watchlist)
@@ -145,15 +165,19 @@ def interaction(media_id):
     
     except DataError:
         db.session.rollback()
-        return {
-            "Error": "Invalid value for watched or watchlist," 
-            " must be either yes or no."
-        }, 422
+        return jsonify(
+            {
+                "Error": "Invalid value for watched or watchlist," 
+                " must be either yes or no."
+            }
+        ), 422
     except IntegrityError:
         db.session.rollback()
-        return {
-            "Error": "Rating can only be whole numbers from 0 to 10."
-        }, 422
+        return jsonify(
+            {
+                "Error": "Rating can only be whole numbers from 0 to 10."
+            }
+        ), 422
 
 
 @interaction_bp.route("/<int:interaction_id>", methods=["DELETE"])
@@ -178,17 +202,23 @@ def delete_interaction(interaction_id):
                 .filter_by(id=interaction_id)
             ) 
             if not interaction_to_delete:
-                return {
-                    "Error": f"Unable to find interaction with id {interaction_id}."
-                }, 404
+                return jsonify(
+                    {
+                        "Error": f"Unable to find interaction with id {interaction_id}."
+                    }
+                ), 404
         else:
-            return {
-                "Error": "Not authorised to delete this interaction."
-            }, 403
+            return jsonify(
+                {
+                    "Error": "Not authorised to delete this interaction."
+                }
+            ), 403
     
     db.session.delete(interaction_to_delete)
     db.session.commit()
-    return {
-        "Message": f"Interaction with id {interaction_id} deleted successfully."
-    }
+    return jsonify(
+        {
+            "Message": f"Interaction with id {interaction_id} deleted successfully."
+        }
+    ), 200
 

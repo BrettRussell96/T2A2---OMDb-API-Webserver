@@ -1,5 +1,4 @@
 from datetime import date
-import functools
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -10,7 +9,32 @@ from models.comment import Comment, comment_schema, comments_schema
 from models.user import User
 from models.media import Media, MediaEnum
 
+
 comment_bp = Blueprint('comment', __name__, url_prefix='/comment')
+
+
+@comment_bp.route("/", methods=["GET"])
+def get_comments():
+    username = request.args.get('username')
+    title = request.args.get('title')
+    query = db.session.query(Comment)
+
+    if username:
+        query = query.join(User).filter(User.username == username)
+    
+    if title:
+        query = query.join(Media).filter(Media.title.ilike(title))
+    
+    comments = query.all()
+
+    if not comments:
+        return jsonify(
+            {
+                "Error": "No comments found matching the criteria."
+            }
+        ), 404
+    
+    return jsonify(comments_schema.dump(comments)), 200
 
 
 @comment_bp.route("/create", methods=["POST"])
@@ -21,9 +45,11 @@ def create_comment():
     data = request.get_json()
 
     if 'title' not in data or 'category' not in data or 'content' not in data:
-        return {
-            "Error": "title, category, and content are required."
-        }, 400
+        return jsonify(
+            {
+                "Error": "title, category, and content are required."
+            }
+        ), 400
     
     title = data['title']
     category = data['category']
@@ -34,13 +60,17 @@ def create_comment():
         category_enum = MediaEnum[category]
         media = Media.query.filter_by(title=title, category=category_enum).one()
     except NoResultFound:
-        return {
-            "Error": "Media not found."
-        },404
+        return jsonify(
+            {
+                "Error": "Media not found."
+            }
+        ), 404
     except KeyError:
-        return {
-            "Error": "Category value must be either 'movie' or 'series'."
-        }, 500
+        return jsonify(
+            {
+                "Error": "Category value must be either 'movie' or 'series'."
+            }
+        ), 500
     
     new_comment = Comment(
         content=content,
@@ -53,5 +83,42 @@ def create_comment():
     db.session.commit()
 
     return jsonify(comment_schema.dump(new_comment)), 201
+
+
+@comment_bp.route("/<int:comment_id>", methods=["PATCH"])
+@jwt_required()
+def update_comment(comment_id):
+    current_user_id = int(get_jwt_identity())
+
+    comment = Comment.query.get(comment_id)
+
+    if not comment:
+        return jsonify(
+            {
+                "Error": "Comment not found."
+            }
+        ), 404
+        
+
+    if comment.user_id != current_user_id:
+        return jsonify(
+            {
+                "Error": "You are not authorised to update this comment."
+            }
+        ), 403
+    
+    data = request.get_json()
+    new_content = data.get('content')
+
+    if not new_content:
+        return jsonify(
+            {
+                "Error": "Content is required."
+            }
+        ), 400
+    
+    comment.content = new_content
+    db.session.commit()
+    return jsonify(comment_schema.dump(comment)), 200
 
 

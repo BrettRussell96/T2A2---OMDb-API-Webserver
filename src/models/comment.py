@@ -37,6 +37,11 @@ class Comment(db.Model):
 class CommentSchema(ma.Schema):
 
     id = fields.Int()
+    content = fields.Str()
+    created = fields.DateTime(
+        format="%Y-%m-%d T%H:%M"
+    )
+
     user = fields.Nested(
         'UserSchema',
         only=['username']
@@ -46,6 +51,7 @@ class CommentSchema(ma.Schema):
         only=['title', 'category']
     )
 
+    parent_id = fields.Int(allow_none=True)
 
     class Meta:
         fields = (

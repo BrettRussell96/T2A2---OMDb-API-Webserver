@@ -26,9 +26,11 @@ def authorise_as_admin(fn):
         if user.is_admin:
             return fn(*args, **kwargs)
         else:
-            return {
-                "Error": "Only admin users can delete media."
-                }, 403
+            return jsonify(
+                {
+                    "Error": "Only admin users can delete media."
+                }
+            ), 403
     
     return wrapper
 
@@ -49,33 +51,41 @@ def get_media():
         if genre:
             filtered_query = query.filter(Media.genre.ilike(f"%{genre}%"))
             if filtered_query.first() is None:
-                return {
-                "Error": f"Genre {genre} not found."
-            }, 404
+                return jsonify(
+                    {
+                        "Error": f"Genre {genre} not found."
+                    }
+                ), 404
             query = filtered_query
             
         if actor:
             filtered_query = query.filter(Media.actors.ilike(f"%{actor}%"))
             if filtered_query.first() is None:
-                return {
-                "Error": f"Actor {actor} not found."
-            }, 404
+                return jsonify(
+                    {
+                        "Error": f"Actor {actor} not found."
+                    }
+                ), 404
             query = filtered_query
 
             
         if director:
             filtered_query = query.filter(Media.director.ilike(f"%{director}%"))
             if filtered_query.first() is None:
-                return {
-                "Error": f"Director {director} not found."
-            }, 404
+                return jsonify(
+                    {
+                        "Error": f"Director {director} not found."
+                    }
+                ), 404
             query = filtered_query
     
         media = query.all()
     except DataError:
-        return {
-            "Error": "Media must be either movie or series if specified."
-        }, 422
+        return jsonify(
+            {
+                "Error": "Media must be either movie or series if specified."
+            }
+        ), 422
     
     match info_type:
         case 'title':
@@ -87,20 +97,24 @@ def get_media():
         case 'all':
             result = medias_schema.dump(media)
         case _:
-            return {
-                "Error": "Invalid info type. Please specify either "
-                        "title, plot, rating, or all"
-                }, 422
-    return {"media": result}, 200
+            return jsonify(
+                {
+                    "Error": "Invalid info type. Please specify either "
+                    "title, plot, rating, or all"
+                }
+            ), 422
+    return jsonify({"media": result}), 200
 
 
 @media_bp.route("/movie", methods=["GET"])
 def get_movie():
     title = request.args.get('title')
     if not title:
-        return {
-            "Error": "A title parameter is required"
-        }, 400
+        return jsonify(
+            {
+                "Error": "A title parameter is required"
+            }
+        ), 400
 
     movie = Media.query.filter_by(title=title).first()
     if movie:
@@ -112,9 +126,11 @@ def get_movie():
     data = response.json()
 
     if data.get('Type') == 'series':
-        return {
-            "Error": "This title corresponds to a TV series, not a movie."
-        }, 400
+        return jsonify(
+            {
+                "Error": "This title corresponds to a TV series, not a movie."
+            }
+        ), 400
     if response.status_code == 200 and data.get('Response') != 'False':
     
         data = response.json()
@@ -138,18 +154,22 @@ def get_movie():
         return media_schema.dump(movie), 201
     
     else:
-        return {
-            "Error": "Title could not be found"
-        }, 404
+        return jsonify(
+            {
+                "Error": "Title could not be found"
+            }
+        ), 404
 
 
 @media_bp.route("/tv", methods=["GET"])
 def get_tv():
     title = request.args.get('title')
     if not title:
-        return {
-            "Error": "A title parameter is required"
-        }, 400
+        return jsonify(
+            {
+                "Error": "A title parameter is required"
+            }
+        ), 400
     
     tv = Media.query.filter_by(title=title).first()
     if tv:
@@ -161,9 +181,11 @@ def get_tv():
     data = response.json()
 
     if data.get('Type') == 'movie':
-        return {
-            "Error": "This title corresponds to a movie, not a TV series."
-        }, 400
+        return jsonify(
+            {
+                "Error": "This title corresponds to a movie, not a TV series."
+            }
+        ), 400
     
     if response.status_code == 200 and data.get('Response') != 'False':
 
@@ -186,9 +208,11 @@ def get_tv():
         return media_schema.dump(tv), 201
     
     else:
-        return {
-            "Error": "Title could not be found"
-        }, 404
+        return jsonify(
+            {
+                "Error": "Title could not be found"
+            }
+        ), 404
     
 
 @media_bp.route("/<int:media_id>", methods=["DELETE"])
@@ -205,14 +229,14 @@ def delete_media(media_id):
         return jsonify(
             {
                 "Message": f"Media {media_to_delete.title} deleted successfully"
-                }
-            ), 200
+            }
+        ), 200
     else:
         return jsonify(
             {
                 "Error": f"Media with id {media_id} not found"
-                }
-            ), 404
+            }
+        ), 404
 
 
 
