@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from marshmallow import fields, validate
-from marshmallow.validate import Length, And, Regexp
+from marshmallow import fields
 
 from models.user import User
 from models.media import Media

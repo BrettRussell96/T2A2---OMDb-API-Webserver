@@ -1,17 +1,16 @@
-from datetime import date
-
+# external imports for flask and SQLAlchemy
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
-
+# local imports for SQLAlchemy, models and schemas
 from init import db
 from models.comment import Comment, comment_schema, comments_schema
 from models.user import User
 from models.media import Media, MediaEnum
 
-
+# define a blueprint for comment URL endpoint
 comment_bp = Blueprint('comment', __name__, url_prefix='/comment')
 
 
@@ -31,7 +30,11 @@ def get_comments():
                 }
             ), 404
         
-        user_comment_ids = db.session.query(Comment.id).filter(Comment.user_id == user.id).subquery()
+        user_comment_ids = db.session.query(
+            Comment.id
+            ).filter(
+            Comment.user_id == user.id
+            ).subquery()
     
         query = query.filter(
             or_(
