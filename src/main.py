@@ -8,18 +8,19 @@ from init import db, ma, jwt, bcrypt
 
 
 def create_app():
-    # create instance of flask to establish 
+    # create instance of flask to establish
     # applications root path
     app = Flask(__name__)
     # configure environment variables
     app.config["SQLALCHEMY_DATABASE_URI"]=os.environ.get("DATABASE_URI")
     app.config["JWT_SECRET_KEY"]=os.environ.get("JWT_SECRET_KEY")
-    # initialise app extensions 
+    # initialise app extensions
     db.init_app(app)
     ma.init_app(app)
     jwt.init_app(app)
     bcrypt.init_app(app)
-    # implement global error handling 
+
+    # implement global error handling
     @app.errorhandler(400)
     def bad_request(err):
         return {"error": str(err)}, 400
@@ -35,11 +36,11 @@ def create_app():
     @app.errorhandler(500)
     def internal_server_error(err):
         return {"error": str(err)}, 500
-    
+
     @app.errorhandler(ValidationError)
     def validation_error(error):
         return {"error": error.messages}, 400
-    # register blueprints for controllers 
+    # register blueprints for controllers
     from controllers.cli_controller import db_commands
     app.register_blueprint(db_commands)
 

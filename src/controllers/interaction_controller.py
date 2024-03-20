@@ -13,6 +13,7 @@ from models.media import Media
 # define blueprint for interaction URL endpoint
 interaction_bp = Blueprint('interaction', __name__, url_prefix='/interaction')
 
+
 # GET request to show fltered interactions of a specific user
 @interaction_bp.route("/user", methods=["GET"])
 # check for JWT token
@@ -25,7 +26,7 @@ def get_user_interactions():
     watchlist = request.args.get('watchlist')
     # check to see if a username is provided
     if not username:
-        # return a bad request if no username 
+        # return a bad request if no username
         return jsonify(
             {
                 "Error": "Username is required"
@@ -52,18 +53,19 @@ def get_user_interactions():
 
     if ratings == 'yes':
         query = query.filter(Interaction.rating.isnot(None))
-    # search for interactions matching the query filters 
+    # search for interactions matching the query filters
     interactions = query.all()
     # if no interactions are found return an error message
     # as a JSON response
     if not interactions:
         return jsonify(
             {
-                "Error": f"No specified interactions found for user '{username}'."
+                "Error": f"No specified interactions found for '{username}'."
             }
         ), 404
     # return any interactions as a JSON response based on the schema
     return jsonify(interactions_schema.dump(interactions)), 200
+
 
 # GET requestv to retrieve interactions on a
 # specified media record
@@ -78,7 +80,7 @@ def get_media_interactions():
     watchlist = request.args.get('watchlist')
     # check to see if a title is provided
     if not title:
-        # return bad request JSON response if no title 
+        # return bad request JSON response if no title
         return jsonify(
             {
                 "Error": "Must enter a value for title."
@@ -86,23 +88,25 @@ def get_media_interactions():
         ), 400
     # query the database for a media record with a matching title
     # to the search parameter
-    media = Media.query.filter(func.lower(Media.title) == func.lower(title)).first()
+    media = Media.query.filter(
+            func.lower(Media.title) == func.lower(title)
+        ).first()
     if not media:
         return jsonify(
             {
                 "Error": f"'{title}' could not be found."
             }
         ), 404
-    # query the database for interaction record on 
+    # query the database for interaction record on
     # the media record found
     query = Interaction.query.filter_by(media_id=media.id)
     # apply filters to query variable from search parameters
     if watched == 'yes':
         query = query.filter_by(watched=watched)
-    
+
     if watchlist == 'yes':
         query = query.filter_by(watchlist=watchlist)
-    
+
     if ratings == 'yes':
         query = query.filter(Interaction.rating.isnot(None))
     # search for interactions matching specified filters
@@ -111,11 +115,12 @@ def get_media_interactions():
     if not interactions:
         return jsonify(
             {
-                "Error": f"No specified interactions found for media '{title}'."
+                "Error": f"No specified interactions found for '{title}'."
             }
         ), 404
     # return a JSON response with the matching interactions
     return jsonify(interactions_schema.dump(interactions)), 200
+
 
 # POST and PATCH request for creating and updating interactions
 # on media records specified by id in the URL
@@ -135,7 +140,7 @@ def interaction(media_id):
                     "Error": "User not found"
                 }
             ), 404
-        # query the database to find the id of the 
+        # query the database to find the id of the
         # media record specified in the URL
         media = Media.query.get(media_id)
         if not media:
@@ -154,7 +159,7 @@ def interaction(media_id):
             ).first()
         # check request method for POST
         if request.method == "POST":
-            # return a bad request response if the user 
+            # return a bad request response if the user
             # already has an interaction for the media record
             if existing:
                 return jsonify(
@@ -181,7 +186,7 @@ def interaction(media_id):
             if not existing:
                 return jsonify(
                     {
-                        "Error": "No interaction found. Use POST to create." 
+                        "Error": "No interaction found. Use POST to create."
                     }
                 ), 404
             # if an interaction is found update it
@@ -193,7 +198,7 @@ def interaction(media_id):
         db.session.commit()
         # if existing return a successful response
         if existing:
-            return jsonify(interaction_schema.dump(existing)), 200 
+            return jsonify(interaction_schema.dump(existing)), 200
         # if a new interaction record is created return a created status code
         else:
             return jsonify(interaction_schema.dump(interaction)), 201
@@ -204,7 +209,7 @@ def interaction(media_id):
         # return forbidden status code when enum constraint is violated
         return jsonify(
             {
-                "Error": "Invalid value for watched or watchlist," 
+                "Error": "Invalid value for watched or watchlist,"
                 " must be either yes or no."
             }
         ), 422
@@ -219,6 +224,7 @@ def interaction(media_id):
             }
         ), 422
 
+
 # DELETE request to handle the removal of a specified interaction record
 @interaction_bp.route("/<int:interaction_id>", methods=["DELETE"])
 # check for valid JWT token
@@ -228,12 +234,15 @@ def delete_interaction(interaction_id):
     current_user_id = get_jwt_identity()
 
     try:
-        # find interaction by id 
+        # find interaction by id
         # check that it belongs to the current user
         interaction_to_delete = db.session.scalar(
             db.select(Interaction)
             .join(User)
-            .filter(Interaction.id == interaction_id, User.id == current_user_id)
+            .filter(
+                Interaction.id == interaction_id,
+                User.id == current_user_id
+            )
         )
     # if the interaction is not found or belongs to another user
     # set value to none
@@ -252,15 +261,15 @@ def delete_interaction(interaction_id):
             interaction_to_delete = db.session.scalar(
                 db.select(Interaction)
                 .filter_by(id=interaction_id)
-            ) 
+            )
             # if no interaction is found return a not found response
             if not interaction_to_delete:
                 return jsonify(
                     {
-                        "Error": f"Unable to find interaction with id {interaction_id}."
+                        "Error": f"Interaction id {interaction_id} not found."
                     }
                 ), 404
-        
+
         else:
             # if the user is not admin return a forbidden response
             return jsonify(
@@ -274,6 +283,6 @@ def delete_interaction(interaction_id):
     # return a JSON response with a confirmation message
     return jsonify(
         {
-            "Message": f"Interaction with id {interaction_id} deleted successfully."
+            "Message": f"Interaction with id {interaction_id} deleted."
         }
     ), 200

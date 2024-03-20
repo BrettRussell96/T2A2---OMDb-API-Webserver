@@ -8,21 +8,23 @@ from marshmallow_enum import EnumField
 # local imports for SQLAlchemy and marshmallow
 from init import db, ma
 
-# class to define enum categories 
+
+# class to define enum categories
 class MediaEnum(enum.Enum):
     movie = "movie"
     series = "series"
+
 
 # create media model
 class Media(db.Model):
     # set tablename to media
     __tablename__ = "media"
     # use db to define columns and datatypes
-    # set id to primary key 
+    # set id to primary key
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
     year = db.Column(db.String)
-    # set category to enum type 
+    # set category to enum type
     category = db.Column(Enum(MediaEnum))
     genre = db.Column(db.String)
     director = db.Column(db.String)
@@ -40,6 +42,7 @@ class Media(db.Model):
         back_populates='media'
     )
 
+
 # create schema class
 class MediaSchema(ma.Schema):
     # define data type for fields
@@ -47,6 +50,7 @@ class MediaSchema(ma.Schema):
     title = fields.Str()
     year = fields.Str()
     category = EnumField(MediaEnum, by_value=True)
+
     # class to specify fields included in serialised representation
     class Meta:
         fields = (
@@ -67,13 +71,16 @@ class MediaSchema(ma.Schema):
         # specify correct order
         ordered = True
 
+
 # schema instances to handle single and multiple record response
 media_schema = MediaSchema()
 medias_schema = MediaSchema(many=True)
 
+
 # schema for showing condensed data
 class MediaTitleSchema(ma.Schema):
     category = EnumField(MediaEnum, by_value=True)
+
     class Meta:
         fields = (
             'id',
@@ -81,12 +88,15 @@ class MediaTitleSchema(ma.Schema):
             'category'
         )
 
+
 # instance for media title schema
 media_titles_schema = MediaTitleSchema(many=True)
 
-# schema for additional condensed data 
+
+# schema for additional condensed data
 class MediaPlotSchema(ma.Schema):
     category = EnumField(MediaEnum, by_value=True)
+
     class Meta:
         fields = (
             'id',
@@ -99,9 +109,11 @@ class MediaPlotSchema(ma.Schema):
 
 media_plots_schema = MediaPlotSchema(many=True)
 
+
 # schema to show ratings in response with condensed fields
 class MediaRatingSchema(ma.Schema):
     category = EnumField(MediaEnum, by_value=True)
+
     class Meta:
         fields = (
             'id',

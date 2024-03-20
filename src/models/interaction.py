@@ -8,7 +8,8 @@ from sqlalchemy import CheckConstraint, Enum
 from .media import MediaSchema
 from init import db, ma
 
-# class for enum categories 
+
+# class for enum categories
 class InteractionEnum(enum.Enum):
     yes = "yes"
     no = "no"
@@ -21,7 +22,7 @@ class Interaction(db.Model):
     # define columns and datatypes
     # set id to primary key
     id = db.Column(db.Integer, primary_key=True)
-    # set watched to enum data type 
+    # set watched to enum data type
     watched = db.Column(Enum(InteractionEnum), default=InteractionEnum.no)
     rating = db.Column(db.Integer)
     # set watchlist to enum
@@ -38,13 +39,14 @@ class Interaction(db.Model):
         'Media',
         back_populates='interactions'
     )
-    # define check constraint for ratings to be between 0 - 10 
+    # define check constraint for ratings to be between 0 - 10
     __table_args__ = (
         (CheckConstraint(
             'rating >= 0 AND rating <= 10', name='check_rating_range'
         ),
+        )
     )
-    )
+
 
 # create schema class
 class InteractionSchema(ma.Schema):
@@ -59,12 +61,13 @@ class InteractionSchema(ma.Schema):
     # nested fields for foreign keys to show what fields will be shown
     user = fields.Nested(
         'UserSchema',
-        only = ['username', 'location']
+        only=['username', 'location']
     )
     media = fields.Nested(
         MediaSchema,
-        only = ('id', 'title', 'year', 'category')
+        only=('id', 'title', 'year', 'category')
     )
+
     # class to specify fields in serialised representation
     class Meta:
         fields = (
@@ -76,8 +79,8 @@ class InteractionSchema(ma.Schema):
             'user'
         )
         ordered = True
-    
+
+
 # instances of schema for single or multiple records
 interaction_schema = InteractionSchema()
 interactions_schema = InteractionSchema(many=True)
-

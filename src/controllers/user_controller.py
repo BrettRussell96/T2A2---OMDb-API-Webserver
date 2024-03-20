@@ -15,15 +15,17 @@ from models.user import user_schema_partial, user_registration_schema
 # blueprint definition for url endpoint
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
+
 # request to get all current users
 @user_bp.route("/")
 def get_all_users():
-    # query database and fetch all users    
+    # query database and fetch all users
     users = User.query.all()
     # serialise users into JSON objects based on schema
     result = users_public_schema.dump(users)
-    # return result as a response with successful status code 
+    # return result as a response with successful status code
     return jsonify({"users": result}), 200
+
 
 # request to get all users from a specified location
 @user_bp.route("/location")
@@ -41,15 +43,16 @@ def get_users_by_location():
     users = User.query.filter(
         User.location.ilike(f"%{location_query}%")
         ).all()
-    # return serialised JSON object based on schema 
+    # return serialised JSON object based on schema
     return users_public_schema.dump(users), 200
+
 
 # route to create user profiles as a POST request
 @user_bp.route("/register", methods=["POST"])
 def user_register():
     # retrieve the JSON data from the request
     body_data = request.get_json()
-    
+
     try:
         # validate data against UserSchema
         errors = user_registration_schema.validate(body_data)
@@ -112,6 +115,7 @@ def user_register():
                     }
                 ), 400
 
+
 # POST request for user login
 @user_bp.route("/login", methods=["POST"])
 def user_login():
@@ -138,18 +142,20 @@ def user_login():
         # return user info with token as a JSON response
         return jsonify(
             {
-            "username": user.username,
-            "email": user.email, "token": token,
-            "is_admin": user.is_admin
+                "username": user.username,
+                "email": user.email, "token": token,
+                "is_admin": user.is_admin
             }
         ), 200
-    # return an error and unauthorised status code in the case of invalid fields 
+    # return an error and unauthorised status code
+    # in the case of invalid fields
     else:
         return jsonify(
             {
                 "Error": "Username or password is invalid"
             }
         ), 401
+
 
 # PATCH request for updating user info
 @user_bp.route("/", methods=["PUT", "PATCH"])
@@ -158,24 +164,24 @@ def user_login():
 def edit_user():
     # retrieve user identity from JWT token
     current_user_id = get_jwt_identity()
-    # query database for a user with matching ID 
+    # query database for a user with matching ID
     current_user = User.query.filter_by(id=current_user_id).first()
     # if no user is found return error message with not found status code
     if not current_user:
         return jsonify(
             {
-                "Error": f"User could not be found."
+                "Error": "User could not be found."
             }
         ), 404
     # retrieve JSON data from request
     data = request.get_json()
 
     try:
-        # request data against user_schema_partial 
+        # request data against user_schema_partial
         errors = user_schema_partial.validate(data)
         # return bad request with error response in case of validation error
         if errors:
-            return jsonify(errors), 400  
+            return jsonify(errors), 400
         # update current_user value with fields provided in request data
         if 'username' in data:
             current_user.username = data['username']
@@ -202,7 +208,7 @@ def edit_user():
         error_code = err.orig.pgcode
         # check for unique violation in error code
         if error_code == errorcodes.UNIQUE_VIOLATION:
-            # check for column where unique violation occured 
+            # check for column where unique violation occured
             column_name = err.orig.diag.constraint_name
             # return error based on the field where the exception occured
             if 'username' in column_name:
@@ -219,6 +225,7 @@ def edit_user():
                         " Please use a different email."
                     }
                 ), 400
+
 
 # DELETE request to handle removing user records
 @user_bp.route("/<int:user_id>", methods=["DELETE"])
@@ -238,7 +245,8 @@ def delete_user(user_id):
                 "Error": "User not found."
             }
         ), 404
-    # check to see if the user has admin status or matches the user to be deleted
+    # check to see if the user has admin status
+    # or matches the user to be deleted
     if current_user.id == user_id or current_user.is_admin:
         # query database for the id specified in the URL
         user_to_delete = db.session.scalar(
@@ -249,10 +257,10 @@ def delete_user(user_id):
         if user_to_delete:
             db.session.delete(user_to_delete)
             db.session.commit()
-            # return a successful response which confirms which user was deleted
+            # return a successful response confirming which user was deleted
             return jsonify(
                 {
-                    "Message": f"User {user_to_delete.username} deleted successfully."
+                    "Message": f"User {user_to_delete.username} deleted."
                 }
             ), 200
         # return a not found error if no user matches the specified id
@@ -262,7 +270,7 @@ def delete_user(user_id):
                     "Error": f"Unable to find user with id {user_id}."
                 }
             ), 404
-    # return an error with a forbidden status code if the user is not authrised 
+    # return an error with a forbidden status code if the user is not authrised
     else:
         return jsonify(
             {

@@ -5,6 +5,7 @@ from models.user import User
 from models.media import Media
 from init import db, ma
 
+
 # create comment model
 class Comment(db.Model):
     # set tablename to comments
@@ -20,7 +21,7 @@ class Comment(db.Model):
     # set relationships with other models
     parent = db.relationship(
         'Comment',
-        remote_side=[id], 
+        remote_side=[id],
         backref='children'
     )
     user = db.relationship(
@@ -31,6 +32,7 @@ class Comment(db.Model):
         'Media',
         backref='comments'
     )
+
 
 # create schema class
 class CommentSchema(ma.Schema):
@@ -53,6 +55,7 @@ class CommentSchema(ma.Schema):
     parent_id = fields.Int(allow_none=True)
     # specify nesting for child comments
     children = fields.Nested('self', many=True, exclude=('parent',))
+
     # create meta class to show which fields are displayed
     class Meta:
         fields = (
@@ -63,6 +66,7 @@ class CommentSchema(ma.Schema):
             'created',
             'parent_id'
         )
+
 
 # create schema instances for importing
 comment_schema = CommentSchema()

@@ -9,21 +9,22 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 # local imports for SQLAlchemy, models and schemas
 from init import db
-from models.comment import Comment, comment_schema, comments_schema
+from models.comment import Comment, comment_schema
 from models.user import User
 from models.media import Media, MediaEnum
 
 # define a blueprint for comment URL endpoint
 comment_bp = Blueprint('comment', __name__, url_prefix='/comment')
 
-# GET route to view comments made for any media 
+
+# GET route to view comments made for any media
 # or by any user
 @comment_bp.route("/", methods=["GET"])
 def get_comments():
     # retrieve query parameters
     username = request.args.get('username')
     title = request.args.get('title')
-    # initialise query to fetch comments 
+    # initialise query to fetch comments
     # with related child comments
     query = Comment.query.options(
         joinedload(Comment.user),
@@ -42,10 +43,14 @@ def get_comments():
                 }
             ), 404
         # query database to find comments made by the user
-        filtered_query = query.join(Comment.user).filter(User.username == username)
+        filtered_query = query.join(
+                Comment.user
+            ).filter(
+                User.username == username
+            )
         # return not found response if no result is found
         if filtered_query.first() is None:
-            return(
+            return jsonify(
                 {
                     "Error": f"No comments found from user {username}."
                 }
@@ -55,7 +60,9 @@ def get_comments():
     # check for title parameter
     if title:
         # find title in the database
-        media = Media.query.filter(func.lower(Media.title) == func.lower(title)).first()
+        media = Media.query.filter(
+                func.lower(Media.title) == func.lower(title)
+            ).first()
         # return not found error if not in the database
         if not media:
             return jsonify(
@@ -64,7 +71,11 @@ def get_comments():
                 }
             ), 404
         # search database for comments from the title
-        filtered_query = query.join(Comment.media).filter(func.lower(Media.title) == func.lower(title))
+        filtered_query = query.join(
+                Comment.media
+            ).filter(
+                func.lower(Media.title) == func.lower(title)
+            )
         # return error if no comments are found
         if filtered_query.first() is None:
             return jsonify(
@@ -80,8 +91,9 @@ def get_comments():
     # parent comment id a key with child comments being value
     comments_by_parent = defaultdict(list)
     for comment in comments:
-            comments_by_parent[comment.parent_id].append(comment)    
-    # nested recursive function used to serialise child comments 
+        comments_by_parent[comment.parent_id].append(comment)
+
+    # nested recursive function used to serialise child comments
     def serialise_comment(comment):
         return {
             # media record values are stored in the key value pairs
@@ -95,14 +107,21 @@ def get_comments():
                 "title": comment.media.title,
                 "category": comment.media.category.name
                 },
-                # runs function recursively for each child comment
-            "children": [serialise_comment(child) for child in comments_by_parent[comment.id]]
+            # runs function recursively for each child comment
+            "children": [
+                serialise_comment(child) for child in comments_by_parent[
+                    comment.id
+                    ]
+                ]
         }
     # top level comments are serialised using recursive function
     # this keeps replies nested within original comments
-    serialised_comments = [serialise_comment(comment) for comment in comments if comment.parent_id is None]
+    serialised_comments = [
+        serialise_comment(c) for c in comments if c.parent_id is None
+        ]
     # return JSON response
     return jsonify(serialised_comments)
+
 
 # POST route to create new comments
 @comment_bp.route("/create", methods=["POST"])
@@ -150,7 +169,7 @@ def create_comment():
                 "Error": "Category value must be either 'movie' or 'series'."
             }
         ), 422
-    # create new comment instance 
+    # create new comment instance
     new_comment = Comment(
         content=content,
         user_id=current_user_id,
@@ -163,12 +182,13 @@ def create_comment():
     # return a JSON response with the created comment record
     return jsonify(comment_schema.dump(new_comment)), 201
 
+
 # PATCH request for updating existing comments
 @comment_bp.route("/<int:comment_id>", methods=["PATCH"])
 # check for valid JWT token
 @jwt_required()
 def update_comment(comment_id):
-    # get user id from JWT token convert to int 
+    # get user id from JWT token convert to int
     # to check against comment.user_id
     current_user_id = int(get_jwt_identity())
     # search database for comment to match the URL ID
@@ -180,7 +200,7 @@ def update_comment(comment_id):
                 "Error": "Comment not found."
             }
         ), 404
-        
+
     # check for authorisation return 403 forbidden if not authorised
     if comment.user_id != current_user_id:
         return jsonify(
@@ -188,7 +208,7 @@ def update_comment(comment_id):
                 "Error": "You are not authorised to update this comment."
             }
         ), 403
-    # extract JSON data from request body 
+    # extract JSON data from request body
     data = request.get_json()
     new_content = data.get('content')
     # return 400 bad request if content field is empty
@@ -205,9 +225,10 @@ def update_comment(comment_id):
     # return JSON response showing the updated comment
     return jsonify({"updated comment": result}), 200
 
+
 # DELETE request for removing comments
 @comment_bp.route("/<int:comment_id>", methods=["DELETE"])
-# check for valid JWT TOKEN 
+# check for valid JWT TOKEN
 @jwt_required()
 def delete_comment(comment_id):
     # get user id from JWT token
@@ -241,11 +262,11 @@ def delete_comment(comment_id):
             if not comment_to_delete:
                 return jsonify(
                     {
-                        "Error": f"Unable to find comment with id {comment_id}."
+                        "Error": f"Cannot find comment with id {comment_id}."
                     }
                 ), 404
         else:
-            # return a 403 error message if the user does not 
+            # return a 403 error message if the user does not
             # have admin status
             return jsonify(
                 {
@@ -261,5 +282,3 @@ def delete_comment(comment_id):
             "Message": f"Comment with id {comment_id} deleted successfully."
         }
     ), 200
-
-

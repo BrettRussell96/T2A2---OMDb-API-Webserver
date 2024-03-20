@@ -2,7 +2,7 @@
 import os
 import requests
 import functools
-# external flask and SQLAlchemy imports for requests, JSON, JWT 
+# external flask and SQLAlchemy imports for requests, JSON, JWT
 # and exceptions
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -20,6 +20,7 @@ media_bp = Blueprint('media', __name__, url_prefix='/media')
 # retrieves API key from .env variable
 api_key = os.getenv('OMDB_API_KEY')
 
+
 # wrapper function to check for admin status
 def authorise_as_admin(fn):
     # decorator to preserve metadata
@@ -28,7 +29,7 @@ def authorise_as_admin(fn):
     def wrapper(*args, **kwargs):
         # get user identity from JWT token
         user_id = get_jwt_identity()
-        # query database to select user 
+        # query database to select user
         stmt = db.select(User).filter_by(id=user_id)
         # store the query result as user value
         user = db.session.scalar(stmt)
@@ -36,17 +37,19 @@ def authorise_as_admin(fn):
         if user.is_admin:
             # call the original function with its arguments
             return fn(*args, **kwargs)
-        # return error message with forbidden status code if the user is not admin
+        # return error message with forbidden
+        # status code if the user is not admin
         else:
             return jsonify(
                 {
                     "Error": "Only admin users can delete media."
                 }
             ), 403
-    
+
     return wrapper
 
-# GET request to retrieve media records 
+
+# GET request to retrieve media records
 @media_bp.route("/", methods=["GET"])
 def get_media():
     # query parameters defined for filtering search results
@@ -61,9 +64,9 @@ def get_media():
     try:
         # check to see if series or movie is specified
         if media_type:
-            # query the database to find records with matching category 
+            # query the database to find records with matching category
             query = query.filter(Media.category == media_type)
-        # check to see if genre is specified  
+        # check to see if genre is specified
         if genre:
             # query the database for genres matching the query parameter value
             filtered_query = query.filter(Media.genre.ilike(f"%{genre}%"))
@@ -76,7 +79,7 @@ def get_media():
                 ), 404
             # add filtered query value to query variable
             query = filtered_query
-        # check to see if an actor is specified 
+        # check to see if an actor is specified
         if actor:
             # query the database to find a matching actor
             filtered_query = query.filter(Media.actors.ilike(f"%{actor}%"))
@@ -90,10 +93,12 @@ def get_media():
             # apply filter to query
             query = filtered_query
 
-        # check to see if a director is specified 
+        # check to see if a director is specified
         if director:
             # query database to find any matching director
-            filtered_query = query.filter(Media.director.ilike(f"%{director}%"))
+            filtered_query = query.filter(
+                    Media.director.ilike(f"%{director}%")
+                )
             if filtered_query.first() is None:
                 # return error message if none are found
                 return jsonify(
@@ -103,7 +108,8 @@ def get_media():
                 ), 404
             # apply filter to query variable
             query = filtered_query
-        # after all filters are applied, execute query to retrieve matching records
+        # after all filters are applied
+        # execute query to retrieve matching records
         media = query.all()
     # handle data errors
     except DataError:
@@ -115,7 +121,7 @@ def get_media():
             }
         ), 422
     # match case to determine displayed info
-    # return JSON object with appropriate schema 
+    # return JSON object with appropriate schema
     # based on info type parameter
     match info_type:
         case 'title':
@@ -138,6 +144,7 @@ def get_media():
     # return JSON media record
     return jsonify({"media": result}), 200
 
+
 # GET request for retrieving a single movie record
 @media_bp.route("/movie", methods=["GET"])
 @jwt_required()
@@ -152,27 +159,30 @@ def get_movie():
             }
         ), 400
     # query the database to find a title matching the parameter
-    movie = Media.query.filter(func.lower(Media.title) == func.lower(title)).first()
+    movie = Media.query.filter(
+            func.lower(Media.title) == func.lower(title)
+        ).first()
     if movie:
         # return JSON response if a matching title is found
         return media_schema.dump(movie), 200
-    # use API key to retrieve data if the title is not found in the local database
+    # use API key to retrieve data if
+    # the title is not found in the local database
     response = requests.get(
         f"http://www.omdbapi.com/?t={title}&type=movie&plot=full&apikey={api_key}"
         )
     # convert the response to JSON format and store in data variable
     data = response.json()
-    # check to confirm that the record is a movie 
+    # check to confirm that the record is a movie
     if data.get('Type') == 'series':
         return jsonify(
             {
                 "Error": "This title corresponds to a TV series, not a movie."
             }
         ), 400
-    
+
     if response.status_code == 200 and data.get('Response') != 'False':
-        # convert JSON response and use to create a new 
-        # media instance   
+        # convert JSON response and use to create a new
+        # media instance
         data = response.json()
         movie = Media(
             title=data.get('Title'),
@@ -191,7 +201,7 @@ def get_movie():
         # store the retrieved instance in the local database
         db.session.add(movie)
         db.session.commit()
-        # return a JSON response 
+        # return a JSON response
         return media_schema.dump(movie), 201
     # return a not found error message if the title could not be found
     else:
@@ -200,6 +210,7 @@ def get_movie():
                 "Error": "Title could not be found"
             }
         ), 404
+
 
 # GET route to retrieve a single tv series record
 @media_bp.route("/tv", methods=["GET"])
@@ -215,8 +226,10 @@ def get_tv():
             }
         ), 400
     # query the local database for a media record matching the title
-    tv = Media.query.filter(func.lower(Media.title) == func.lower(title)).first()
-    # if a record is found return a JSON response 
+    tv = Media.query.filter(
+            func.lower(Media.title) == func.lower(title)
+        ).first()
+    # if a record is found return a JSON response
     if tv:
         return media_schema.dump(tv), 200
     # if not local record is found use API key to retrieve
@@ -224,7 +237,7 @@ def get_tv():
     response = requests.get(
         f"http://www.omdbapi.com/?t={title}&type=series&plot=full&apikey={api_key}"
         )
-    # convert third party record to JSON format 
+    # convert third party record to JSON format
     data = response.json()
     # check to confirm the title is that of a tv series
     if data.get('Type') == 'movie':
@@ -233,7 +246,7 @@ def get_tv():
                 "Error": "This title corresponds to a movie, not a TV series."
             }
         ), 400
-    # if a record of a tv series is found 
+    # if a record of a tv series is found
     if response.status_code == 200 and data.get('Response') != 'False':
         # create a new media instance from the OMDb record
         data = response.json()
@@ -261,7 +274,8 @@ def get_tv():
                 "Error": "Title could not be found"
             }
         ), 404
-    
+
+
 # DELETE request for removal of media records
 @media_bp.route("/<int:media_id>", methods=["DELETE"])
 # check for a valid JWT token
@@ -280,11 +294,12 @@ def delete_media(media_id):
         # return a confirmation message as a response
         return jsonify(
             {
-                "Message": f"Media {media_to_delete.title} deleted successfully"
+                "Message": f"Media {media_to_delete.title} deleted."
             }
         ), 200
     else:
-        # if no media record is found return an error message as a JSON response
+        # if no media record is found
+        # return an error message as a JSON response
         return jsonify(
             {
                 "Error": f"Media with id {media_id} not found"
