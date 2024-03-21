@@ -205,7 +205,8 @@ def edit_user():
         # return a message response if update is successful
         return jsonify(
             {
-                "Messsage": "User updated successfully"
+                "Messsage": "User updated successfully",
+                f"{current_user.username}": user_schema.dump(data)
             }
         ), 200
     # handle integrity errors

@@ -1,6 +1,7 @@
 # external imports for flask and SQLAlchemy
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from marshmallow import ValidationError
 from sqlalchemy import func, case
 from sqlalchemy.exc import DataError, IntegrityError, NoResultFound
 # local imports for SQLAlchemy, models and schemas
@@ -221,6 +222,13 @@ def interaction(media_id):
         existing = Interaction.query.filter_by(
             user_id=user.id, media_id=media.id
             ).first()
+        
+        try:
+            # deserialise and validate body request
+            interaction_schema.load(body_data)
+        except ValidationError as err:
+            return jsonify(err.messages), 400
+        
         # check request method for POST
         if request.method == "POST":
             # return a bad request response if the user
