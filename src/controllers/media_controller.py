@@ -160,7 +160,8 @@ def get_movie():
         ), 400
     # query the database to find a title matching the parameter
     movie = Media.query.filter(
-            func.lower(Media.title) == func.lower(title)
+            func.lower(Media.title) == func.lower(title),
+            Media.category == 'movie'
         ).first()
     if movie:
         # return JSON response if a matching title is found
@@ -226,12 +227,13 @@ def get_tv():
             }
         ), 400
     # query the local database for a media record matching the title
-    tv = Media.query.filter(
-            func.lower(Media.title) == func.lower(title)
+    media = Media.query.filter(
+            func.lower(Media.title) == func.lower(title),
+            Media.category == 'series'
         ).first()
     # if a record is found return a JSON response
-    if tv:
-        return media_schema.dump(tv), 200
+    if media:
+        return media_schema.dump(media), 200
     # if not local record is found use API key to retrieve
     # a third party record
     response = requests.get(

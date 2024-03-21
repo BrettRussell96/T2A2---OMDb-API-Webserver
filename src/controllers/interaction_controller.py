@@ -1,7 +1,7 @@
 # external imports for flask and SQLAlchemy
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy import func
+from sqlalchemy import func, case
 from sqlalchemy.exc import DataError, IntegrityError, NoResultFound
 # local imports for SQLAlchemy, models and schemas
 from init import db
@@ -120,6 +120,70 @@ def get_media_interactions():
         ), 404
     # return a JSON response with the matching interactions
     return jsonify(interactions_schema.dump(interactions)), 200
+
+
+# GET request to retrieve total interactions on a media record
+@interaction_bp.route("/summary", methods=["GET"])
+def get_media_summary():
+    # retrieve title query parameter
+    title = request .args.get('title')
+    if not title:
+        # return a bad request response in no title provided
+        return jsonify(
+            {
+                "Error": "Title parameter is required."
+            }
+        ), 400
+    # query the database to find a media record matching title
+    media = Media.query.filter(
+        func.lower(Media.title) == func.lower(title)
+        ).first()
+    if not media:
+        # return a not found response if no record is found
+        return jsonify(
+            {
+                "Error": f"Title {title} not found."
+            }
+        ), 404
+    # query database to aggregate interaction data
+    summary = db.session.query(
+        Media.title,
+        Media.category,
+        # use count to get the total number of watched, watchlist, ratings
+        # use case for enum category differentiating
+        func.count(case((Interaction.watched == 'yes', 1), else_=0)
+                   ).label('watched_count'),
+        func.count(Interaction.rating).label('rating_count'),
+        # use avg to retrieve the average rating given by users
+        func.avg(Interaction.rating).label('average_rating'),
+        func.count(case((Interaction.watchlist == 'yes', 1), else_=0)
+                   ).label('watchlist_count')
+        ).join(
+            Interaction
+        ).filter(
+            Interaction.media_id == media.id
+        ).group_by(
+            Media.id
+        ).first()
+
+    if not summary:
+        # return a not found response if no interactions exist
+        return jsonify(
+            {
+                "Error": f"No interactions found for {title}."
+            }
+        ), 404
+    # convert summary data to dictionary for the response
+    result = {
+        "title": summary.title,
+        "category": summary.category.value,
+        "watched_count": summary.watched_count,
+        "rating_count": summary.rating_count,
+        "average_rating": float(summary.average_rating) if summary.average_rating else None,
+        "watchlist_count": summary.watchlist_count
+    }
+    # return a JSON response for result
+    return jsonify(result), 200
 
 
 # POST and PATCH request for creating and updating interactions

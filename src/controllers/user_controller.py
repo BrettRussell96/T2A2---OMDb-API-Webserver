@@ -5,6 +5,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
+from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
 from werkzeug.security import generate_password_hash
@@ -31,9 +32,9 @@ def get_all_users():
 @user_bp.route("/location")
 def get_users_by_location():
     # retrieve the value of the location query parameter
-    location_query = request.args.get('location')
+    location = request.args.get('location')
     # check for a parameter value
-    if not location_query:
+    if not location:
         return jsonify(
             {
                 "Error": "Location parameter is required"
@@ -41,8 +42,15 @@ def get_users_by_location():
         ), 400
     # query database for user records based on location column
     users = User.query.filter(
-        User.location.ilike(f"%{location_query}%")
+        func.lower(User.location) == func.lower(location)
         ).all()
+    if not users:
+        # return 404 if no users found in search
+        return jsonify(
+            {
+                "Error": f"No users found in {location}"
+            }
+        ), 404
     # return serialised JSON object based on schema
     return users_public_schema.dump(users), 200
 
