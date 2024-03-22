@@ -6,7 +6,7 @@ from sqlalchemy import func, case
 from sqlalchemy.exc import DataError, IntegrityError, NoResultFound
 # local imports for SQLAlchemy, models and schemas
 from init import db
-from models.interaction import Interaction
+from models.interaction import Interaction, interactions_partial_schema
 from models.interaction import interactions_schema, interaction_schema
 from models.user import User
 from models.media import Media
@@ -23,7 +23,7 @@ def get_user_interactions():
     # query parameters for request filtering
     username = request.args.get('username')
     watched = request.args.get('watched')
-    ratings = request.args.get('rating')
+    ratings = request.args.get('ratings')
     watchlist = request.args.get('watchlist')
     # check to see if a username is provided
     if not username:
@@ -64,8 +64,9 @@ def get_user_interactions():
                 "Error": f"No specified interactions found for '{username}'."
             }
         ), 404
+    result = interactions_partial_schema.dump(interactions)
     # return any interactions as a JSON response based on the schema
-    return jsonify(interactions_schema.dump(interactions)), 200
+    return jsonify({f"User {username}": result}), 200
 
 
 # GET requestv to retrieve interactions on a
@@ -77,7 +78,7 @@ def get_media_interactions():
     # search parameters for query filters
     title = request.args.get('title')
     watched = request.args.get('watched')
-    ratings = request.args.get('rating')
+    ratings = request.args.get('ratings')
     watchlist = request.args.get('watchlist')
     # check to see if a title is provided
     if not title:

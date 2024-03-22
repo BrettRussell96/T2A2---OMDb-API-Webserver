@@ -61,11 +61,11 @@ class InteractionSchema(ma.Schema):
     # nested fields for foreign keys to show what fields will be shown
     user = fields.Nested(
         'UserSchema',
-        only=['username', 'location']
+        only=['username']
     )
     media = fields.Nested(
         MediaSchema,
-        only=('id', 'title', 'year', 'category')
+        only=('title', 'year', 'category')
     )
 
     # class to specify fields in serialised representation
@@ -83,4 +83,5 @@ class InteractionSchema(ma.Schema):
 
 # instances of schema for single or multiple records
 interaction_schema = InteractionSchema()
+interactions_partial_schema = InteractionSchema(many=True, exclude=['user'])
 interactions_schema = InteractionSchema(many=True)

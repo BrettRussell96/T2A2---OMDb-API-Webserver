@@ -32,7 +32,8 @@ class UserSchema(ma.Schema):
         validate=And(
             Length(
                 min=5,
-                error="Username must be at least 5 characters."
+                max=25,
+                error="Username must be between 5-25 characters."
             ),
             Regexp(
                 '^[a-zA-Z0-9_.-]+$',
@@ -40,6 +41,17 @@ class UserSchema(ma.Schema):
             )
         )
     )
+    # define the datatype, requirement and validation criteria for email
+    email = fields.String(
+        required=True,
+        validate=And(
+            Length(
+                min=10,
+                error="Email must be at least 10 characters"
+            )
+        )
+    )
+
     # define datatype, requirement, and validation criteria for password
     password = fields.String(
         required=True,

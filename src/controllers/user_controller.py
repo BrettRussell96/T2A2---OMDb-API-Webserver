@@ -18,7 +18,7 @@ user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 
 # request to get all current users
-@user_bp.route("/")
+@user_bp.route("/", methods=["GET"])
 def get_all_users():
     # query database and fetch all users
     users = User.query.all()
@@ -29,7 +29,7 @@ def get_all_users():
 
 
 # request to get all users from a specified location
-@user_bp.route("/location")
+@user_bp.route("/location", methods=["GET"])
 def get_users_by_location():
     # retrieve the value of the location query parameter
     location = request.args.get('location')
@@ -166,7 +166,7 @@ def user_login():
 
 
 # PATCH request for updating user info
-@user_bp.route("/", methods=["PUT", "PATCH"])
+@user_bp.route("/update", methods=["PUT", "PATCH"])
 # check for a valid JWT token
 @jwt_required()
 def edit_user():
