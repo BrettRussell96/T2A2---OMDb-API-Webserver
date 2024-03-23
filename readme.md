@@ -213,18 +213,18 @@ For the planning and task management of this application, I made use of Trello. 
 ### Planning Phase
 In the planning phase I had two activities:
 
-**Requirements** - where I detailed the file structure of my application as well as the necessary third party services that would be required.
-![trello req1](./docs/trello_requirements1.png)
+**Requirements** - where I detailed the file structure of my application as well as the necessary third party services that would be required.  
+![trello req1](./docs/trello_requirements1.png)  
 ![trello req2](./docs/trello_requirements2.png)
 
 **ERD and Requests** - where I planned out the tables and columns to be used for the application as well as listing as many requests I could potentially include into the apps functionality as possible.
 
 ### Development Phase 
-I seperated this phase into five sections, the first section being devoted to the 'boilerplate' code necessary to build the structure of the application, and the other four being each individual model and its associated route and endpoints. 
+I seperated this phase into five sections, the first section being devoted to the 'boilerplate' code necessary to build the structure of the application, and the other four being each individual model and its associated route and endpoints.  
 ![trello foundation](./docs/trello_foundation.png)
 
-As I worked on each model, I would frequently refer back to my plan to check which requests needed to be created in order to fulfil my desired functionality. In each activity, I would make comments as I started a new request to keep track of the goal response I required. At the end of each section, I would test for errors before marking it as complete and moving on.
-![trello user](./docs/trello_user.png) 
+As I worked on each model, I would frequently refer back to my plan to check which requests needed to be created in order to fulfil my desired functionality. In each activity, I would make comments as I started a new request to keep track of the goal response I required. At the end of each section, I would test for errors before marking it as complete and moving on.  
+![trello user](./docs/trello_user.png)   
 ![trello interaction](./docs/trello_interaction.png)
 
 Throughout the development process I also made regular commits to a github repository for source control and project tracking. This was generally done at the end of each request or if any major adjustments were made. 
